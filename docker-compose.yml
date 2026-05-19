@@ -1,0 +1,58 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: food_mysql
+    env_file:
+      - ./backend/.env
+    ports:
+      - "${MYSQL_HOST_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  food-app-backend:
+    build: ./backend
+    container_name: food_backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    ports:
+      - "${SPRINGBOOT_HOST_PORT}:8080"
+
+  predict-dish:
+    build: ./ai-service
+    container_name: predict_dish
+    depends_on:
+      - food-app-backend
+    environment:
+      SPRING_URL: ${SPRING_URL}
+    ports:
+      - "${FASTAPI_HOST_PORT}:8000"
+
+  food-website:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_SPRING_URL: ${NEXT_PUBLIC_SPRING_URL}
+
+    container_name: food_frontend
+    env_file:
+      - ./.env
+    environment:
+      SPRING_URL: ${SPRING_URL}
+    ports:
+      - "${NEXTJS_HOST_PORT}:3000"
+
+volumes:
+  mysql_data:
