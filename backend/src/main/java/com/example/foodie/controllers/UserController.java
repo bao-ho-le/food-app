@@ -3,6 +3,13 @@ package com.example.foodie.controllers;
 import com.example.foodie.dtos.*;
 import com.example.foodie.models.User;
 import com.example.foodie.services.interfaces.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
@@ -13,9 +20,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import static com.example.foodie.config.OpenApiConfig.BEARER_SECURITY_SCHEME;
+
 @RestController
 @RequestMapping("${api.prefix}/users")
 @AllArgsConstructor
+@Tag(name = "User", description = "Đăng ký, đăng nhập và quản lý tài khoản người dùng")
 public class UserController {
 
     /* Đoạn này đang inject interface của UserService, đây là cái nên làm thay vì inject thẳng
@@ -24,6 +34,12 @@ public class UserController {
      */
     private UserService userService;
 
+    @Operation(summary = "Đăng ký tài khoản người dùng", description = "Tạo tài khoản người dùng mới. Không yêu cầu đăng nhập.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Đăng ký thành công",
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc email đã tồn tại")
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO) {
         try {
@@ -55,6 +71,12 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Đăng nhập", description = "Xác thực bằng email/mật khẩu và trả về JWT access token. Không yêu cầu đăng nhập.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Đăng nhập thành công",
+                    content = @Content(schema = @Schema(implementation = UserLoginResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Email hoặc mật khẩu không đúng")
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO){
         try{
@@ -70,6 +92,12 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Đổi mật khẩu", description = "Đổi mật khẩu của người dùng hiện tại, yêu cầu mật khẩu cũ đúng.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Đổi mật khẩu thành công"),
+            @ApiResponse(responseCode = "400", description = "Mật khẩu cũ không đúng hoặc dữ liệu không hợp lệ")
+    })
+    @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @PutMapping("/password")
     public ResponseEntity<?> login(@Valid @RequestBody ResetPasswordDTO resetPasswordDTO){
         try {
@@ -84,6 +112,13 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Lấy thông tin hồ sơ", description = "Trả về hồ sơ của người dùng đang đăng nhập (dựa trên JWT token).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lấy hồ sơ thành công",
+                    content = @Content(schema = @Schema(implementation = UserProfileDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Không thể lấy hồ sơ")
+    })
+    @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @GetMapping("/profiles")
     public ResponseEntity<?> getUserProfile(Authentication authentication){
         try {
@@ -99,6 +134,13 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Cập nhật hồ sơ", description = "Cập nhật thông tin hồ sơ của người dùng đang đăng nhập.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cập nhật thành công",
+                    content = @Content(schema = @Schema(implementation = UserProfileDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
+    })
+    @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @PutMapping("/profiles")
     public ResponseEntity<?> updateUserProfile(Authentication authentication,
                                                @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO){

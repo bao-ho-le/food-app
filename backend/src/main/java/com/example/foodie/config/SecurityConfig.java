@@ -47,6 +47,12 @@ public class SecurityConfig {
             .csrf(customizer -> customizer.disable())
                 .cors(Customizer.withDefaults()) // <--- Bắt buộc
                 .authorizeHttpRequests(request -> request
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                            .permitAll()
+
                         .requestMatchers(GET, String.format("%s/tags", apiPrefix))
                             .permitAll()
 

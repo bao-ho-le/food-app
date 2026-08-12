@@ -2,12 +2,14 @@ package com.example.foodie.dtos;
 
 import com.example.foodie.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
+@Schema(description = "Thông tin đăng ký tài khoản người dùng mới")
 public class UserDTO {
     @NotNull(message = "Tên không được để trống")
     private String fullName;
