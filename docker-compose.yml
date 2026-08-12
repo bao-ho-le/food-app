@@ -30,16 +30,6 @@ services:
     ports:
       - "${SPRINGBOOT_HOST_PORT}:8080"
 
-  predict-dish:
-    build: ./ai-service
-    container_name: predict_dish
-    depends_on:
-      - food-app-backend
-    environment:
-      SPRING_URL: ${SPRING_URL}
-    ports:
-      - "${FASTAPI_HOST_PORT}:8000"
-
   food-website:
     build:
       context: ./frontend

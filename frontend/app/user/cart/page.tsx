@@ -11,7 +11,6 @@ import {
   updateUserCartItemQuantity,
   createOrder,
 } from "@/services/user-cart"
-import { trackUserAction } from "@/services/recommendations"
 import { Minus, Plus, Trash2, ShoppingBag, PackageCheck, Ban, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -211,7 +210,6 @@ export default function CartPage() {
         await removeUserCartItem(item.userDishId)
       }
       removeFromCart(dishId)
-      void trackUserAction({ dishId, action: "REMOVE_FROM_CART" }).catch(() => {})
       toast({
         variant: "success",
         title: (
@@ -231,16 +229,12 @@ export default function CartPage() {
   }
 
   const handleClearCart = async () => {
-    const dishIds = cart.items.map((item) => item.dish.id)
     try {
       await flushQuantityUpdates()
       const deletions = cart.items
         .filter((item) => item.userDishId)
         .map((item) => removeUserCartItem(item.userDishId!))
       await Promise.all(deletions)
-      dishIds.forEach((id) => {
-        void trackUserAction({ dishId: id, action: "REMOVE_FROM_CART" }).catch(() => {})
-      })
       clearCart()
       toast({
         variant: "success",
@@ -272,10 +266,6 @@ export default function CartPage() {
     await flushQuantityUpdates()
     try {
       await createOrder(selectedAddress.id)
-      const itemsToTrack = availableItems.length ? availableItems : cart.items
-      itemsToTrack.forEach((item) => {
-        void trackUserAction({ dishId: item.dish.id, action: "ORDER" }).catch(() => {})
-      })
 
       setCheckoutOpen(false)
 
@@ -300,13 +290,6 @@ export default function CartPage() {
         description: "Vui lòng thử lại sau.",
       })
     }
-  }
-
-  const handleCancelOrder = () => {
-    const itemsToTrack = availableItems.length ? availableItems : cart.items
-    itemsToTrack.forEach((item) => {
-      void trackUserAction({ dishId: item.dish.id, action: "CANCEL_ORDER" }).catch(() => {})
-    })
   }
 
   if (isCartLoading) {
@@ -577,7 +560,7 @@ export default function CartPage() {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline" onClick={handleCancelOrder}>Hủy</Button>
+              <Button type="button" variant="outline">Hủy</Button>
             </DialogClose>
             <Button type="button" onClick={handleConfirmOrder}>Xác nhận đặt hàng</Button>
           </DialogFooter>
