@@ -2,6 +2,7 @@ package com.example.foodie.dtos;
 
 import com.example.foodie.models.Tag;
 import com.example.foodie.models.Restaurant;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Data
 @Builder
+@Schema(description = "Thông tin món ăn kèm nhà hàng, tag và đánh giá")
 public class DishDTO {
 
     private Integer id;

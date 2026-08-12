@@ -4,6 +4,13 @@ import com.example.foodie.dtos.DishDTO;
 import com.example.foodie.models.Dish;
 import com.example.foodie.models.Tag;
 import com.example.foodie.services.interfaces.DishService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,14 +23,24 @@ import java.util.List;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import static com.example.foodie.config.OpenApiConfig.BEARER_SECURITY_SCHEME;
+
 
 @RestController
 @RequestMapping("${api.prefix}/dishes")
 @AllArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Dish", description = "Danh sách và thông tin món ăn")
 public class DishController {
 
     private DishService dishService;
 
+    @Operation(summary = "Lấy danh sách món ăn", description = "Trả về toàn bộ món ăn kèm nhà hàng, tag và đánh giá.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = DishDTO.class)))),
+            @ApiResponse(responseCode = "404", description = "Không thể lấy danh sách món ăn")
+    })
+    @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @GetMapping
     public ResponseEntity<?> getAllDishes(){
 
