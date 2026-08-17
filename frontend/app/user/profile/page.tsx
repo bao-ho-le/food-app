@@ -4,14 +4,11 @@ import { useEffect, useState } from "react"
 import {
   User,
   MapPin,
-  Heart,
   Edit,
   Trash2,
   PlusCircle,
   CalendarIcon,
   KeyRound,
-  Star,
-  Search,
   CheckCircle2,
   XCircle,
 } from "lucide-react"
@@ -51,11 +48,7 @@ import {
   updateUserAddress,
 } from "@/services/addresses"
 import type { UserAddressResponse } from "@/services/addresses"
-import { fetchAllTags } from "@/services/tags"
-import type { TagResponse } from "@/services/tags"
-import { fetchUserBiases, updateUserBias } from "@/services/biases"
-import type { UserBiasResponse } from "@/services/biases"
-import type { Address, Bias, Category, Tag, User } from "@/types"
+import type { Address, User } from "@/types"
 
 const DEFAULT_USER: User =
   (Array.isArray(mockUsers) && mockUsers.length > 0
@@ -71,7 +64,6 @@ const DEFAULT_USER: User =
         roleName: "USER",
         createdAt: "",
         isActive: true,
-        bias: [],
         address: [],
       })
 
@@ -89,43 +81,11 @@ const mapApiAddressToClient = (
   userId: apiAddress.user?.id ? String(apiAddress.user.id) : fallbackUserId,
 })
 
-const UNCATEGORIZED_CATEGORY: Category = { id: "uncategorized", name: "Khác" }
-
-const mapApiTagToClient = (tag: TagResponse) => {
-  const categoryId = tag.category?.id ? String(tag.category.id) : UNCATEGORIZED_CATEGORY.id
-  const categoryName = tag.category?.name?.trim() || UNCATEGORIZED_CATEGORY.name
-
-  return {
-    tag: {
-      id: String(tag.id),
-      name: tag.name,
-      categoryId,
-    } as Tag,
-    category: { id: categoryId, name: categoryName } as Category,
-  }
-}
-
-const mapApiBiasToClient = (bias: UserBiasResponse, fallbackUserId: string): Bias | null => {
-  if (!bias.tag?.id) {
-    return null
-  }
-  return {
-    id:
-      bias.id !== undefined && bias.id !== null
-        ? String(bias.id)
-        : `bias-${bias.tag.id}-${Date.now()}`,
-    userId: bias.user?.id ? String(bias.user.id) : fallbackUserId,
-    tagId: String(bias.tag.id),
-    score: typeof bias.score === "number" ? bias.score : 3,
-  }
-}
-
 export default function ProfilePage() {
   const [user, setUser] = useState<User>(DEFAULT_USER)
   const [birthdate, setBirthdate] = useState<Date | undefined>(
     DEFAULT_USER.birthdate ? new Date(DEFAULT_USER.birthdate) : undefined,
   )
-  const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
   const [profileData, setProfileData] = useState({
     name: DEFAULT_USER.name,
@@ -142,15 +102,6 @@ export default function ProfilePage() {
   const [isPasswordDialogOpen, setPasswordDialogOpen] = useState(false)
   const [isAddressesLoading, setIsAddressesLoading] = useState(false)
   const [addressesError, setAddressesError] = useState<string | null>(null)
-  const [preferenceTags, setPreferenceTags] = useState<Tag[]>([])
-  const [preferenceCategories, setPreferenceCategories] = useState<Category[]>([UNCATEGORIZED_CATEGORY])
-  const [isPreferencesLoading, setIsPreferencesLoading] = useState(false)
-  const [preferencesError, setPreferencesError] = useState<string | null>(null)
-  const [isBiasLoading, setIsBiasLoading] = useState(false)
-  const [biasError, setBiasError] = useState<string | null>(null)
-  const [initialBiasScores, setInitialBiasScores] = useState<Record<string, number>>({})
-  const [pendingBiasChanges, setPendingBiasChanges] = useState<Record<string, number>>({})
-  const [isSavingPreferences, setIsSavingPreferences] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -242,115 +193,10 @@ export default function ProfilePage() {
 
     loadAddresses()
 
-    const loadTags = async () => {
-      setIsPreferencesLoading(true)
-      setPreferencesError(null)
-      try {
-        const data = await fetchAllTags()
-        if (!isMounted) return
-        const categoryMap = new Map<string, string>()
-        const normalizedTags: Tag[] = data.map((tag) => {
-          const mapped = mapApiTagToClient(tag)
-          categoryMap.set(mapped.category.id, mapped.category.name)
-          return mapped.tag
-        })
-
-        if (categoryMap.size === 0) {
-          categoryMap.set(UNCATEGORIZED_CATEGORY.id, UNCATEGORIZED_CATEGORY.name)
-        }
-
-        setPreferenceTags(normalizedTags)
-        setPreferenceCategories(
-          Array.from(categoryMap.entries()).map(([id, name]) => ({ id, name })),
-        )
-      } catch (error) {
-        if (!isMounted) return
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Không thể tải danh sách khẩu vị. Vui lòng thử lại."
-        setPreferencesError(message)
-      } finally {
-        if (isMounted) {
-          setIsPreferencesLoading(false)
-        }
-      }
-    }
-
-    const loadBiases = async () => {
-      setIsBiasLoading(true)
-      setBiasError(null)
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-        if (!token) {
-          throw new Error("Vui lòng đăng nhập để xem tùy chọn ẩm thực.")
-        }
-        const data = await fetchUserBiases(token)
-        if (!isMounted) return
-        const fallbackUserId = user.id || DEFAULT_USER.id
-        const normalizedBiases = data
-          .map((bias) => mapApiBiasToClient(bias, fallbackUserId))
-          .filter((bias): bias is Bias => Boolean(bias))
-        const baselineMap = normalizedBiases.reduce<Record<string, number>>((acc, bias) => {
-          acc[bias.tagId] = bias.score
-          return acc
-        }, {})
-        setInitialBiasScores(baselineMap)
-        setPendingBiasChanges({})
-        setUser((currentUser) => ({
-          ...currentUser,
-          bias: normalizedBiases,
-        }))
-      } catch (error) {
-        if (!isMounted) return
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Không thể tải dữ liệu khẩu vị. Vui lòng thử lại."
-        setBiasError(message)
-      } finally {
-        if (isMounted) {
-          setIsBiasLoading(false)
-        }
-      }
-    }
-
-    loadTags()
-    loadBiases()
-
     return () => {
       isMounted = false
     }
   }, [toast])
-
-  const handleScoreChange = (tagId: string, newScore: number) => {
-    setUser((currentUser) => {
-      const newBias = [...currentUser.bias]
-      const biasIndex = newBias.findIndex((b) => b.tagId === tagId)
-      if (biasIndex > -1) {
-        newBias[biasIndex] = { ...newBias[biasIndex], score: newScore }
-      } else {
-        newBias.push({
-          id: `bias-${Date.now()}-${tagId}`,
-          userId: currentUser.id,
-          tagId: tagId,
-          score: newScore,
-        })
-      }
-      return { ...currentUser, bias: newBias }
-    })
-
-    const baselineScore = initialBiasScores[tagId] ?? 3
-    setPendingBiasChanges((prev) => {
-      const next = { ...prev }
-      if (baselineScore === newScore) {
-        delete next[tagId]
-      } else {
-        next[tagId] = newScore
-      }
-      return next
-    })
-  }
 
   const handleSaveAddress = async (addressData: Omit<Address, "id" | "userId"> & { id?: string }) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
@@ -567,93 +413,10 @@ export default function ProfilePage() {
     }
   }
 
-  const handleSavePreferences = async () => {
-    const pendingEntries = Object.entries(pendingBiasChanges)
-    if (pendingEntries.length === 0) {
-      toast({
-        title: "Không có thay đổi",
-        description: "Bạn chưa điều chỉnh khẩu vị nào.",
-      })
-      return
-    }
-
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-    if (!token) {
-      toast({
-        variant: "destructive",
-        title: "Không thể lưu khẩu vị",
-        description: "Vui lòng đăng nhập lại để tiếp tục.",
-      })
-      return
-    }
-
-    setIsSavingPreferences(true)
-    try {
-      const apiResponses: Record<string, UserBiasResponse | undefined> = {}
-      for (const [tagId, score] of pendingEntries) {
-        const numericTagId = Number(tagId)
-        const payloadTagId = Number.isNaN(numericTagId) ? tagId : numericTagId
-        const response = await updateUserBias(token, { tagId: payloadTagId, score })
-        apiResponses[tagId] = response
-      }
-
-      setInitialBiasScores((prev) => {
-        const updated = { ...prev }
-        for (const [tagId, score] of pendingEntries) {
-          updated[tagId] = score
-        }
-        return updated
-      })
-      setPendingBiasChanges({})
-
-      setUser((currentUser) => {
-        const updatedBiases = currentUser.bias.map((bias) => {
-          const response = apiResponses[bias.tagId]
-          if (response?.id !== undefined && response?.id !== null) {
-            return { ...bias, id: String(response.id) }
-          }
-          return bias
-        })
-        return { ...currentUser, bias: updatedBiases }
-      })
-
-      toast({
-        variant: "success",
-        title: (
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            <span className="font-medium">Đã lưu tùy chọn thành công!</span>
-          </div>
-        ),
-      })
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Không thể cập nhật khẩu vị. Vui lòng thử lại."
-      toast({
-        variant: "destructive",
-        title: "Lỗi",
-        description: message,
-      })
-    } finally {
-      setIsSavingPreferences(false)
-    }
-  }
-
-  const normalizedSearchTerm = searchTerm.trim().toLowerCase()
-  const filteredCategories = preferenceCategories.filter((category) =>
-    preferenceTags.some(
-      (tag) =>
-        tag.categoryId === category.id &&
-        tag.name.toLowerCase().includes(normalizedSearchTerm),
-    ),
-  )
-
   return (
     <div className="container mx-auto max-w-5xl px-4 py-8">
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile" className="py-2.5 text-sm md:text-base">
             <User className="mr-2 h-4 w-4" />
             Thông tin tài khoản
@@ -661,10 +424,6 @@ export default function ProfilePage() {
           <TabsTrigger value="addresses" className="py-2.5 text-sm md:text-base">
             <MapPin className="mr-2 h-4 w-4" />
             Sổ địa chỉ
-          </TabsTrigger>
-          <TabsTrigger value="preferences" className="py-2.5 text-sm md:text-base">
-            <Heart className="mr-2 h-4 w-4" />
-            Tùy chọn ẩm thực
           </TabsTrigger>
         </TabsList>
 
@@ -854,120 +613,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="preferences" className="mt-8">
-          <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
-            <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">Tùy chọn ẩm thực</h2>
-                <p className="text-muted-foreground">
-                  Giúp chúng tôi hiểu rõ hơn về khẩu vị của bạn để đưa ra những gợi ý tốt nhất.
-                </p>
-              </div>
-              <div className="relative w-full md:w-auto">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm kiếm sở thích..."
-                  className="w-full pl-8 md:w-[250px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {preferencesError && (
-              <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {preferencesError}
-              </div>
-            )}
-            {biasError && (
-              <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {biasError}
-              </div>
-            )}
-            {(isPreferencesLoading || isBiasLoading) && (
-              <div className="mb-4 rounded-md border border-dashed border-muted px-4 py-3 text-sm text-muted-foreground">
-                Đang tải dữ liệu khẩu vị...
-              </div>
-            )}
-
-            <div className="space-y-8">
-              {filteredCategories.length === 0 && !isPreferencesLoading ? (
-                <p className="text-sm text-muted-foreground">Chưa có dữ liệu khẩu vị để hiển thị.</p>
-              ) : (
-                filteredCategories.map((category) => {
-                  const tagsInCategory = preferenceTags.filter(
-                    (tag) =>
-                      tag.categoryId === category.id &&
-                      tag.name.toLowerCase().includes(normalizedSearchTerm),
-                  )
-                  if (tagsInCategory.length === 0) return null
-                  return (
-                    <div key={category.id}>
-                      <Label className="text-lg font-semibold">{category.name}</Label>
-                      <div className="mt-4 flex flex-wrap gap-3">
-                        {tagsInCategory.map((tag) => {
-                          const userBias = user.bias.find((b: Bias) => b.tagId === tag.id)
-                          const score = userBias ? userBias.score : 3
-                          const getFillPercentage = (value: number): number => {
-                            const scoreMap: { [key: number]: number } = {
-                              1: 0,
-                              2: 25,
-                              3: 50,
-                              4: 75,
-                              5: 100,
-                            }
-                            return scoreMap[value] ?? 50
-                          }
-                          const fillPercentage = getFillPercentage(score)
-
-                          return (
-                            <Popover key={tag.id}>
-                              <PopoverTrigger asChild>
-                                <div className="relative inline-flex cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-background px-4 py-1.5 text-sm font-medium transition-colors hover:bg-amber-50">
-                                  <div
-                                    className="absolute left-0 top-0 h-full bg-amber-200 transition-all duration-300"
-                                    style={{ width: `${fillPercentage}%` }}
-                                  />
-                                  <span className="relative z-10 text-amber-900">{tag.name}</span>
-                                </div>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-2">
-                                <div className="flex items-center gap-1">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
-                                      key={star}
-                                      className={cn(
-                                        "h-6 w-6 cursor-pointer transition-colors",
-                                        score >= star
-                                          ? "fill-yellow-400 text-yellow-400"
-                                          : "text-gray-300 hover:text-yellow-300",
-                                      )}
-                                      onClick={() => handleScoreChange(tag.id, star)}
-                                    />
-                                  ))}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-            <div className="mt-8 border-t pt-6">
-              <Button
-                className="bg-green-700 hover:bg-green-800"
-                onClick={handleSavePreferences}
-                disabled={isSavingPreferences}
-              >
-                {isSavingPreferences ? "Đang lưu..." : "Lưu tùy chọn"}
-              </Button>
             </div>
           </div>
         </TabsContent>

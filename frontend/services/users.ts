@@ -90,7 +90,6 @@ function mapAdminUser(user: AdminUserResponse): User {
     role,
     createdAt: user.createdAt ?? new Date().toISOString(),
     isActive: user.active === undefined ? true : Boolean(user.active),
-    bias: [],
     address: [],
   }
 }

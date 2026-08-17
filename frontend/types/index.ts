@@ -22,16 +22,7 @@ export interface User {
   roleName: "USER" | "ADMIN"
   createdAt: string
   isActive: boolean
-  bias: Bias[]
   address: Address[]
-}
-
-
-export interface Bias {
-  id: string
-  userId: string
-  tagId: string
-  score: number
 }
 
 export interface Address {

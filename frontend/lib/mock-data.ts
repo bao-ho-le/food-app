@@ -1,4 +1,4 @@
-import type { Restaurant, Dish, Order, Review, DashboardStats, RevenueData, Category, Tag, User, Address, Bias } from "@/types"
+import type { Restaurant, Dish, Order, Review, DashboardStats, RevenueData, Category, Tag, User, Address } from "@/types"
 import type { TopSelling } from "@/types"
 const USER_ID = "user_1"
 
@@ -1286,34 +1286,6 @@ export const mockAddresses: Address[] = [
   },
 ];
 
-export const mockBiases: Bias[] = [
-  // Ẩm Thực (cat_1)
-  { id: "bias_1", userId: USER_ID, tagId: "tag_1_1", score: 5 }, // Món Việt (Cực thích)
-  { id: "bias_2", userId: USER_ID, tagId: "tag_1_2", score: 1 }, // Món Hàn (Không thích)
-  { id: "bias_3", userId: USER_ID, tagId: "tag_1_3", score: 3 }, // Món Nhật (Bình thường)
-  { id: "bias_4", userId: USER_ID, tagId: "tag_1_4", score: 2 }, // Món Trung (Ít thích)
-  { id: "bias_5", userId: USER_ID, tagId: "tag_1_6", score: 4 }, // Món Âu (Thích)
-
-  // Nguyên Liệu Chính (cat_2)
-  { id: "bias_6", userId: USER_ID, tagId: "tag_2_1", score: 5 }, // Thịt Bò (Cực thích)
-  { id: "bias_7", userId: USER_ID, tagId: "tag_2_2", score: 3 }, // Thịt Heo (Bình thường)
-  { id: "bias_8", userId: USER_ID, tagId: "tag_2_3", score: 4 }, // Thịt Gà (Thích)
-  { id: "bias_9", userId: USER_ID, tagId: "tag_2_4", score: 2 }, // Hải Sản (Ít thích)
-  { id: "bias_10", userId: USER_ID, tagId: "tag_2_6", score: 5 }, // Bánh Mì/Bún/Phở (Cực thích)
-
-  // Phương Pháp Chế Biến (cat_3)
-  { id: "bias_11", userId: USER_ID, tagId: "tag_3_1", score: 4 }, // Chiên (Thích)
-  { id: "bias_12", userId: USER_ID, tagId: "tag_3_5", score: 5 }, // Nướng/Quay (Cực thích)
-  { id: "bias_13", userId: USER_ID, tagId: "tag_3_3", score: 3 }, // Nấu/Canh (Bình thường)
-  { id: "bias_14", userId: USER_ID, tagId: "tag_3_4", score: 1 }, // Hấp (Không thích)
-
-  // Hương Vị (cat_4)
-  { id: "bias_15", userId: USER_ID, tagId: "tag_4_2", score: 5 }, // Cay (Cực thích)
-  { id: "bias_16", userId: USER_ID, tagId: "tag_4_4", score: 2 }, // Ngọt (Ít thích)
-  { id: "bias_17", userId: USER_ID, tagId: "tag_4_5", score: 4 }, // Béo (Thích)
-  { id: "bias_18", userId: USER_ID, tagId: "tag_4_6", score: 1 }, // Thanh/Nhạt (Không thích)
-];
-
 // 3. Dữ liệu User
 export const mockUsers: User[] = [
   {
@@ -1327,7 +1299,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-01-10T08:00:00Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1341,7 +1312,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-02-22T14:30:00Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1355,7 +1325,6 @@ export const mockUsers: User[] = [
     roleName: "ADMIN",
     createdAt: "2024-01-01T09:00:00Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1369,7 +1338,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-03-15T11:20:00Z",
     isActive: false,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1383,7 +1351,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-04-01T19:00:00Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   // === DỮ LIỆU MỚI THÊM VÀO, GIỮ NGUYÊN CẤU TRÚC ===
@@ -1398,7 +1365,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-05-10T10:10:10Z",
     isActive: false,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1412,7 +1378,6 @@ export const mockUsers: User[] = [
     roleName: "ADMIN",
     createdAt: "2024-01-15T09:00:00Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1426,7 +1391,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-06-01T15:00:00Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1440,7 +1404,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-07-20T20:20:20Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1454,7 +1417,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-08-08T08:08:08Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1468,7 +1430,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-09-01T00:00:00Z",
     isActive: false,
-    bias: mockBiases,
     address: mockAddresses,
   },
   {
@@ -1482,7 +1443,6 @@ export const mockUsers: User[] = [
     roleName: "USER",
     createdAt: "2024-10-01T12:34:56Z",
     isActive: true,
-    bias: mockBiases,
     address: mockAddresses,
   },
 ];

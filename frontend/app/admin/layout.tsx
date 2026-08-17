@@ -45,7 +45,6 @@ const createAdminUserFromStorage = (data: any): User => {
     roleName: "ADMIN",
     createdAt: data?.createdAt ?? new Date().toISOString(),
     isActive: data?.isActive ?? true,
-    bias: Array.isArray(data?.bias) ? data.bias : [],
     address: Array.isArray(data?.address) ? data.address : [],
   };
 };
