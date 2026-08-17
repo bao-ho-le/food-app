@@ -5,7 +5,6 @@ import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.identity.address.helper.AddressHelper;
 import com.example.foodie.identity.address.mapper.AddressMapper;
 import com.example.foodie.identity.address.repository.AddressRepository;
-import com.example.foodie.common.base.BaseServiceImpl;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.IdentityException;
 import com.example.foodie.identity.user.entity.User;
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class AddressServiceImpl extends BaseServiceImpl<Address> implements AddressService {
+public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
     private final AddressHelper addressHelper;
     private final AddressMapper addressMapper;
@@ -26,11 +25,31 @@ public class AddressServiceImpl extends BaseServiceImpl<Address> implements Addr
                               AddressHelper addressHelper,
                               AddressMapper addressMapper,
                               UserHelper userHelper) {
-        super(addressRepository, Address.class, ErrorCode.ADDRESS_NOT_FOUND);
         this.addressRepository = addressRepository;
         this.addressHelper = addressHelper;
         this.addressMapper = addressMapper;
         this.userHelper = userHelper;
+    }
+
+    @Override
+    public List<Address> getAll(){
+        List<Address> allAddresses = addressRepository.findAll();
+
+        if (allAddresses.isEmpty()){
+            throw new IdentityException(ErrorCode.ADDRESS_NOT_FOUND);
+        }
+        return allAddresses;
+    }
+
+    @Override
+    public Address getById(Integer id){
+        return addressRepository.findById(id)
+                .orElseThrow(() -> new IdentityException(ErrorCode.ADDRESS_NOT_FOUND));
+    }
+
+    @Override
+    public void deleteById(Integer id){
+        addressRepository.deleteById(id);
     }
 
     @Override

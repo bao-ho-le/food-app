@@ -2,7 +2,6 @@ package com.example.foodie.ordering.order.controller;
 
 import com.example.foodie.ordering.order.dto.request.OrderDTO;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
-import com.example.foodie.common.base.BaseController;
 import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.ordering.order.entity.Order;
 import com.example.foodie.identity.address.service.AddressService;
@@ -26,14 +25,27 @@ import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCH
 
 @RestController
 @RequestMapping("${api.prefix}/orders")
+@AllArgsConstructor
 @Tag(name = "Order", description = "Đặt món và tra cứu đơn hàng của người dùng")
 @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
-public class OrderController extends BaseController<Order>{
+public class OrderController {
     private final OrderService orderService;
 
-    public OrderController(OrderService orderService) {
-        super(orderService);
-        this.orderService = orderService;
+    @GetMapping
+    public ResponseEntity<List<Order>> getAll(){
+        return ResponseEntity.ok(orderService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> getById(@PathVariable Integer id){
+        return ResponseEntity.ok(orderService.getById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id){
+        orderService.deleteById(id);
+
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Lấy danh sách đơn hàng của người dùng", description = "Trả về toàn bộ đơn hàng của người dùng đang đăng nhập.")

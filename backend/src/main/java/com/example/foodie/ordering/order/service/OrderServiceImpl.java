@@ -2,7 +2,6 @@ package com.example.foodie.ordering.order.service;
 
 import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.identity.address.repository.AddressRepository;
-import com.example.foodie.common.base.BaseServiceImpl;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.OrderingException;
 import com.example.foodie.catalog.image.entity.Image;
@@ -27,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class OrderServiceImpl extends BaseServiceImpl<Order> implements OrderService {
+public class OrderServiceImpl implements OrderService {
     private static final String DEFAULT_DISH_IMAGE_URL =
             "https://statics.vinpearl.com/com-tam-da-nang-4_1710137440.jpg";
 
@@ -48,7 +47,6 @@ public class OrderServiceImpl extends BaseServiceImpl<Order> implements OrderSer
                             OrderHelper orderHelper,
                             OrderMapper orderMapper,
                             UserHelper userHelper) {
-        super(orderRepository, Order.class, ErrorCode.ORDER_NOT_FOUND);
         this.orderRepository = orderRepository;
         this.userDishRepository = userDishRepository;
         this.addressRepository = addressRepository;
@@ -57,6 +55,27 @@ public class OrderServiceImpl extends BaseServiceImpl<Order> implements OrderSer
         this.orderHelper = orderHelper;
         this.orderMapper = orderMapper;
         this.userHelper = userHelper;
+    }
+
+    @Override
+    public List<Order> getAll(){
+        List<Order> allOrders = orderRepository.findAll();
+
+        if (allOrders.isEmpty()){
+            throw new OrderingException(ErrorCode.ORDER_NOT_FOUND);
+        }
+        return allOrders;
+    }
+
+    @Override
+    public Order getById(Integer id){
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_NOT_FOUND));
+    }
+
+    @Override
+    public void deleteById(Integer id){
+        orderRepository.deleteById(id);
     }
 
     @Override

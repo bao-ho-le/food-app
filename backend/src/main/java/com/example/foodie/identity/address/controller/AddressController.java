@@ -1,7 +1,6 @@
 package com.example.foodie.identity.address.controller;
 
 import com.example.foodie.identity.address.dto.request.AddressDTO;
-import com.example.foodie.common.base.BaseController;
 import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.identity.address.service.AddressService;
 
@@ -12,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,14 +24,27 @@ import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCH
 
 @RestController
 @RequestMapping("${api.prefix}/address")
+@AllArgsConstructor
 @Tag(name = "Address", description = "Quản lý địa chỉ giao hàng của người dùng")
 @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
-public class AddressController extends BaseController<Address> {
+public class AddressController {
     private final AddressService addressService;
 
-    public AddressController(AddressService addressService) {
-        super(addressService);
-        this.addressService = addressService;
+    @GetMapping
+    public ResponseEntity<List<Address>> getAll(){
+        return ResponseEntity.ok(addressService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Address> getById(@PathVariable Integer id){
+        return ResponseEntity.ok(addressService.getById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id){
+        addressService.deleteById(id);
+
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Thêm địa chỉ", description = "Thêm địa chỉ giao hàng mới cho người dùng đang đăng nhập.")
