@@ -8,6 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.Instant;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -24,11 +28,20 @@ public class UserDish  {
     @NotNull
     private Integer quantity = 1;
 
-    @ManyToOne
-    @JoinColumn(name="user_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="user_id",
+            foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE"))
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name="dish_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="dish_id",
+            foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (dish_id) REFERENCES dish (id) ON DELETE CASCADE"))
     private Dish dish;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 }

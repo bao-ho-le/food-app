@@ -8,6 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -28,8 +32,9 @@ public class Image {
     @NotNull
     private String url;
 
-    @ManyToOne
-    @JoinColumn(name="image_id", referencedColumnName="id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="image_id", referencedColumnName="id",
+            foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (image_id) REFERENCES dish (id) ON DELETE CASCADE"))
     private Dish dish;
 
     private String publicId;
@@ -43,4 +48,11 @@ public class Image {
     private Integer height;
 
     private String altText;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 }

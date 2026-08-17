@@ -6,9 +6,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,20 +54,17 @@ public class User {
     private String password;
 
     @NotNull
-    @ManyToOne
-    @JoinColumn(name="role_id", referencedColumnName="id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="role_id", referencedColumnName="id",
+            foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE RESTRICT"))
     private Role role;
 
-    @Column(updatable=false)
-    private LocalDateTime createdAt;
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
 
-
-    // PrePersist đánh dấu một method sẽ được gọi tự động ngay khi entity này (User) được thêm thêm vào DB
-    // tức sẽ tự động thêm ngày tạo tài khoảng ngay khi User mới được thêm vào DB
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    @UpdateTimestamp
+    private Instant updatedAt;
 
     @NotNull
     @Builder.Default

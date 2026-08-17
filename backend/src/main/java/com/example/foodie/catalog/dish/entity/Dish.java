@@ -8,7 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -27,11 +30,19 @@ public class Dish {
     @NotNull
     private float price;
 
-    @ManyToOne
-    @JoinColumn(name="restaurant_id", referencedColumnName="id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="restaurant_id", referencedColumnName="id",
+            foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY (restaurant_id) REFERENCES restaurant (id) ON DELETE RESTRICT"))
     private Restaurant restaurant;
 
     @Builder.Default
     private boolean isAvailable = true;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    private Instant updatedAt;
 
 }

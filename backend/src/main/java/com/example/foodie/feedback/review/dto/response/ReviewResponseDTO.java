@@ -1,6 +1,6 @@
 package com.example.foodie.feedback.review.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,6 +23,6 @@ public class ReviewResponseDTO {
     private Integer rating;
 
     @NotNull
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
 }
