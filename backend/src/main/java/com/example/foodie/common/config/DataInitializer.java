@@ -1,8 +1,8 @@
 package com.example.foodie.common.config;
 
-import com.example.foodie.user.enums.RoleName;
-import com.example.foodie.user.entity.Role;
-import com.example.foodie.user.repository.RoleRepository;
+import com.example.foodie.identity.user.enums.RoleName;
+import com.example.foodie.identity.user.entity.Role;
+import com.example.foodie.identity.user.repository.RoleRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
