@@ -1,5 +1,7 @@
 package com.example.foodie.common.base;
 
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.BusinessException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,10 +11,12 @@ import java.util.Optional;
 public abstract class BaseServiceImpl<T> implements BaseService<T> {
     protected final JpaRepository<T, Integer> repository;
     protected final Class<T> type;
+    protected final ErrorCode notFoundErrorCode;
 
-    protected BaseServiceImpl(JpaRepository<T, Integer> repository, Class<T> type) {
+    protected BaseServiceImpl(JpaRepository<T, Integer> repository, Class<T> type, ErrorCode notFoundErrorCode) {
         this.repository = repository;
         this.type = type;
+        this.notFoundErrorCode = notFoundErrorCode;
     }
 
     @Override
@@ -20,7 +24,7 @@ public abstract class BaseServiceImpl<T> implements BaseService<T> {
         List<T> allObjects = repository.findAll();
 
         if(allObjects.isEmpty()){
-            throw new RuntimeException("Không tồn tại " + type.getSimpleName() + " nào");
+            throw new BusinessException(notFoundErrorCode);
         }
         return allObjects;
     }
@@ -30,7 +34,7 @@ public abstract class BaseServiceImpl<T> implements BaseService<T> {
         Optional<T> object = repository.findById(id);
 
         if(object.isEmpty()) {
-            throw new RuntimeException("Không tồn tại " + type.getSimpleName() + " với id: " + id);
+            throw new BusinessException(notFoundErrorCode);
         }
 
         return object.get();

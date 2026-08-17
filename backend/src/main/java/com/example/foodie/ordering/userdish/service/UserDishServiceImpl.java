@@ -2,6 +2,9 @@ package com.example.foodie.ordering.userdish.service;
 
 import com.example.foodie.catalog.dish.entity.Dish;
 import com.example.foodie.catalog.dish.repository.DishRepository;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.CatalogException;
+import com.example.foodie.common.exception.business_exception.OrderingException;
 import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.identity.user.helper.UserHelper;
 import com.example.foodie.ordering.userdish.dto.request.UserDishDTO;
@@ -28,7 +31,7 @@ public class UserDishServiceImpl implements UserDishService {
         List<UserDish> userDishes = userDishRepository.findAll();
 
         if(userDishes.isEmpty()){
-            throw new RuntimeException("Không tồn tại userDish nào");
+            throw new OrderingException(ErrorCode.USERDISH_NOT_FOUND);
         }
         return userDishes;
     }
@@ -46,7 +49,7 @@ public class UserDishServiceImpl implements UserDishService {
 
         User user = userHelper.getUserFromAuthentication(authentication);
         Dish dish = dishRepository.findById(userDishDTO.getDishId())
-                .orElseThrow(() -> new RuntimeException("Dish không tồn tại"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
 
         Optional<UserDish> existingUserDish =
                 userDishRepository.findByUser_IdAndDish_Id(user.getId(), userDishDTO.getDishId());
@@ -77,7 +80,7 @@ public class UserDishServiceImpl implements UserDishService {
         userDishHelper.validateQuantity(quantity);
 
         UserDish userDish = userDishRepository.findById(userDishId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy món trong giỏ"));
+                .orElseThrow(() -> new OrderingException(ErrorCode.USERDISH_NOT_FOUND));
 
         if (quantity <= 0){
             userDishRepository.deleteById(userDishId);

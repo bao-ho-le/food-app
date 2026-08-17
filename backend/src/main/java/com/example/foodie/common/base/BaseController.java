@@ -1,6 +1,5 @@
 package com.example.foodie.common.base;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,47 +16,19 @@ public abstract class BaseController<T> {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll(){
-        try{
-            List<T> allObjects = baseService.getAll();
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(allObjects);
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<T>> getAll(){
+        return ResponseEntity.ok(baseService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Integer id){
-        try{
-            T object = baseService.getById(id);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(object);
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<T> getById(@PathVariable Integer id){
+        return ResponseEntity.ok(baseService.getById(id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Integer id){
-        try{
-            baseService.deleteById(id);
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id){
+        baseService.deleteById(id);
 
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .build();
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok().build();
     }
 }

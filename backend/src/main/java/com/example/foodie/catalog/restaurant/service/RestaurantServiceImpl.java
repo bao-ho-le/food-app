@@ -3,6 +3,8 @@ package com.example.foodie.catalog.restaurant.service;
 import com.example.foodie.catalog.restaurant.entity.Restaurant;
 import com.example.foodie.catalog.restaurant.helper.RestaurantHelper;
 import com.example.foodie.catalog.restaurant.repository.RestaurantRepository;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.CatalogException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +21,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         List<Restaurant> restaurants = restaurantRepository.findAll();
 
         if (restaurants.isEmpty()){
-            throw new RuntimeException("Không có nhà hàng nào");
+            throw new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND);
         }
         return restaurants;
     }
@@ -29,10 +31,10 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurantHelper.validateRestaurantRequest(restaurant);
 
         if (restaurantRepository.existsByName(restaurant.getName())){
-            throw new RuntimeException("Nhà hàng đã tồn tại");
+            throw new CatalogException(ErrorCode.RESTAURANT_NAME_ALREADY_EXISTS);
         }
         if (restaurantRepository.existsByPhoneNumber(restaurant.getPhoneNumber())){
-            throw new RuntimeException("Số điện thoại đã tồn tại");
+            throw new CatalogException(ErrorCode.RESTAURANT_PHONE_ALREADY_EXISTS);
         }
 
         Restaurant newRestaurant = Restaurant.builder()
@@ -50,7 +52,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurantHelper.validateBlockingType(type);
 
         Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà hàng"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         restaurant.setAvailable(type == 1);
 
@@ -63,7 +65,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurantHelper.validateRestaurantRequest(restaurant);
 
         Restaurant existingRestaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà hàng"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         existingRestaurant.setName(restaurant.getName());
         existingRestaurant.setAddress(restaurant.getAddress());

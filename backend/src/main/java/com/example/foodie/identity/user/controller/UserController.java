@@ -49,34 +49,17 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc email đã tồn tại")
     })
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody UserDTO userDTO) {
-        try {
-            UserResponseDTO userResponseDTO = userService.register(userDTO);
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(userResponseDTO);
-
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserDTO userDTO) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(userService.register(userDTO));
     }
 
     @PostMapping("/register-admin")
-    public ResponseEntity<?> registerAdmin(@Valid @RequestBody AdminDTO adminDTO) {
-        try {
-            AdminResponseDTO adminResponseDTO = userService.registerAdmin(adminDTO);
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(adminResponseDTO);
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<AdminResponseDTO> registerAdmin(@Valid @RequestBody AdminDTO adminDTO) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(userService.registerAdmin(adminDTO));
     }
 
     @Operation(summary = "Đăng nhập", description = "Xác thực bằng email/mật khẩu và trả về JWT access token. Không yêu cầu đăng nhập.")
@@ -86,18 +69,8 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "Email hoặc mật khẩu không đúng")
     })
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO){
-        try{
-            UserLoginResponseDTO userLoginResponseDTO = userService.login(userLoginDTO);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(userLoginResponseDTO);
-        } catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<UserLoginResponseDTO> login(@Valid @RequestBody UserLoginDTO userLoginDTO){
+        return ResponseEntity.ok(userService.login(userLoginDTO));
     }
 
     @Operation(summary = "Đổi mật khẩu", description = "Đổi mật khẩu của người dùng hiện tại, yêu cầu mật khẩu cũ đúng.")
@@ -107,17 +80,10 @@ public class UserController {
     })
     @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @PutMapping("/password")
-    public ResponseEntity<?> login(@Valid @RequestBody ResetPasswordDTO resetPasswordDTO){
-        try {
-            userService.resetPassword(resetPasswordDTO);
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body("Đổi mật khẩu thành công");
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<String> login(@Valid @RequestBody ResetPasswordDTO resetPasswordDTO){
+        userService.resetPassword(resetPasswordDTO);
+
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
     }
 
     @Operation(summary = "Lấy thông tin hồ sơ", description = "Trả về hồ sơ của người dùng đang đăng nhập (dựa trên JWT token).")
@@ -128,18 +94,8 @@ public class UserController {
     })
     @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @GetMapping("/profiles")
-    public ResponseEntity<?> getUserProfile(Authentication authentication){
-        try {
-            UserProfileDTO userProfile = userService.getUserProfileByToken(authentication);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(userProfile);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication){
+        return ResponseEntity.ok(userService.getUserProfileByToken(authentication));
     }
 
     @Operation(summary = "Cập nhật hồ sơ", description = "Cập nhật thông tin hồ sơ của người dùng đang đăng nhập.")
@@ -150,19 +106,9 @@ public class UserController {
     })
     @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @PutMapping("/profiles")
-    public ResponseEntity<?> updateUserProfile(Authentication authentication,
+    public ResponseEntity<UserProfileDTO> updateUserProfile(Authentication authentication,
                                                @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO){
-        try {
-            UserProfileDTO userProfile = userService.updateProfile(authentication, userProfileUpdateDTO);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(userProfile);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(userService.updateProfile(authentication, userProfileUpdateDTO));
     }
 
     @PostMapping("/logout")
@@ -171,32 +117,14 @@ public class UserController {
     }
 
     @GetMapping("/getAll")
-    public ResponseEntity<?> getAllUsers(Authentication authentication){
-        try {
-            List<User> allUsers = userService.getAllUsers(authentication);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(allUsers);
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<User>> getAllUsers(Authentication authentication){
+        return ResponseEntity.ok(userService.getAllUsers(authentication));
     }
 
     @PostMapping("/blocking/{id}/{type}")
-    public ResponseEntity<?> blocking(@PathVariable Integer id, @PathVariable Integer type){
-        try{
-           userService.blocking(id, type);
+    public ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type){
+        userService.blocking(id, type);
 
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body("Success");
-        }catch(Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok("Success");
     }
 }

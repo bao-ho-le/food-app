@@ -7,6 +7,8 @@ import com.example.foodie.catalog.dishtag.helper.DishTagHelper;
 import com.example.foodie.catalog.dishtag.repository.DishTagRepository;
 import com.example.foodie.catalog.tag.entity.Tag;
 import com.example.foodie.catalog.tag.repository.TagRepository;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.CatalogException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +25,13 @@ public class DishTagServiceImpl implements DishTagService {
         dishTagHelper.validateDishId(dishId);
         dishTagHelper.validateTagId(tagId);
 
-        Dish dish = dishRepository.findById(dishId).orElse(null);
-        Tag tag = tagRepository.findById(tagId).orElse(null);
+        Dish dish = dishRepository.findById(dishId)
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new CatalogException(ErrorCode.TAG_NOT_FOUND));
 
-        if (dish == null || tag == null){
-            throw new RuntimeException("Dish hoặc Tag không tồn tại");
-        }
         if (dishTagRepository.existsByDish_IdAndTag_Id(dishId, tagId)){
-            throw new RuntimeException("Dish đã có tag này rồi");
+            throw new CatalogException(ErrorCode.DISHTAG_ALREADY_EXISTS);
         }
 
         return dishTagRepository.save(DishTag.builder()

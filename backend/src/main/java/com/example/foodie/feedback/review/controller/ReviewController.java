@@ -39,20 +39,9 @@ public class ReviewController {
             @ApiResponse(responseCode = "400", description = "Món ăn không tồn tại")
     })
     @GetMapping("/dish/{dish_id}")
-    public ResponseEntity<?> getAllReviewsByDishId(
+    public ResponseEntity<List<ReviewResponseDTO>> getAllReviewsByDishId(
             @Parameter(description = "ID của món ăn") @PathVariable(name="dish_id") Integer dishId){
-        List<ReviewResponseDTO> reviews = reviewService.findAllReviewsByDishId(dishId);
-
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(reviews);
-
-        } catch(RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(reviewService.findAllReviewsByDishId(dishId));
     }
 
     @Operation(summary = "Thêm đánh giá", description = "Thêm đánh giá cho một món ăn đã đặt (theo order_dish_id).")
@@ -61,19 +50,11 @@ public class ReviewController {
             @ApiResponse(responseCode = "400", description = "Món ăn đã đặt không tồn tại hoặc dữ liệu không hợp lệ")
     })
     @PostMapping("/dish/{order_dish_id}")
-    public ResponseEntity<?> addReview(
+    public ResponseEntity<Review> addReview(
             @Parameter(description = "ID của món ăn trong đơn hàng") @PathVariable(name="order_dish_id") Integer orderDishId,
             @Valid @RequestBody Review review){
-        try {
-            Review newReview = reviewService.addReview(orderDishId, review);
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(newReview);
-        }catch(Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(reviewService.addReview(orderDishId, review));
     }
 }

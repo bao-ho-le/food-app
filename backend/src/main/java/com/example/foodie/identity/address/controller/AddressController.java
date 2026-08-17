@@ -40,19 +40,10 @@ public class AddressController extends BaseController<Address> {
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
     })
     @PostMapping("/user")
-    public ResponseEntity<?> addAddressByUserId(Authentication authentication,@Valid @RequestBody AddressDTO addressDTO) {
-        try {
-            Address newAddress = addressService.addAddressByUserId(authentication, addressDTO);
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(newAddress);
-
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<Address> addAddressByUserId(Authentication authentication,@Valid @RequestBody AddressDTO addressDTO) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(addressService.addAddressByUserId(authentication, addressDTO));
     }
 
     @Operation(summary = "Lấy danh sách địa chỉ", description = "Trả về toàn bộ địa chỉ giao hàng của người dùng đang đăng nhập.")
@@ -60,19 +51,8 @@ public class AddressController extends BaseController<Address> {
             @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công")
     })
     @GetMapping("/user")
-    public ResponseEntity<?> getAllAddressesByUserId(Authentication authentication) {
-        List<Address> allAddresses = addressService.getAllAddressesByUser(authentication);
-
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(allAddresses);
-
-        } catch(RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Address>> getAllAddressesByUserId(Authentication authentication) {
+        return ResponseEntity.ok(addressService.getAllAddressesByUser(authentication));
     }
 
     @Operation(summary = "Xoá địa chỉ", description = "Xoá một địa chỉ giao hàng theo ID.")
@@ -80,20 +60,11 @@ public class AddressController extends BaseController<Address> {
             @ApiResponse(responseCode = "200", description = "Xoá địa chỉ thành công")
     })
     @DeleteMapping("/user/{address_id}")
-    public ResponseEntity<?> deleteAddress(
+    public ResponseEntity<String> deleteAddress(
             @Parameter(description = "ID của địa chỉ") @PathVariable(name="address_id") Integer addressId) {
         addressService.deleteAddressById(addressId);
 
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body("Xoá địa chỉ thành công");
-
-        } catch(RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok("Xoá địa chỉ thành công");
     }
 
     @Operation(summary = "Cập nhật địa chỉ", description = "Cập nhật thông tin một địa chỉ giao hàng theo ID.")
@@ -102,21 +73,10 @@ public class AddressController extends BaseController<Address> {
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc địa chỉ không tồn tại")
     })
     @PutMapping("/user/{address_id}")
-    public ResponseEntity<?> updateAddress(Authentication authentication,
+    public ResponseEntity<AddressDTO> updateAddress(Authentication authentication,
                                             @Parameter(description = "ID của địa chỉ") @PathVariable(name="address_id") Integer addressId,
                                             @Valid @RequestBody AddressDTO addressDTO) {
-        AddressDTO addressDTORes = addressService.updateAddress(authentication, addressId, addressDTO);
-
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(addressDTORes);
-
-        } catch(RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(addressService.updateAddress(authentication, addressId, addressDTO));
     }
 
 }

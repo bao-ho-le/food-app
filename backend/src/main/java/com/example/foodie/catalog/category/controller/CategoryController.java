@@ -3,7 +3,6 @@ package com.example.foodie.catalog.category.controller;
 import com.example.foodie.catalog.category.entity.Category;
 import com.example.foodie.catalog.category.service.CategoryService;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,17 +17,7 @@ public class CategoryController {
     private CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<?> getAllCategories(){
-        try{
-            List<Category> categories = categoryService.getAllCategories();
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(categories);
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Category>> getAllCategories(){
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 }

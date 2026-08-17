@@ -6,6 +6,8 @@ import com.example.foodie.identity.address.helper.AddressHelper;
 import com.example.foodie.identity.address.mapper.AddressMapper;
 import com.example.foodie.identity.address.repository.AddressRepository;
 import com.example.foodie.common.base.BaseServiceImpl;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.IdentityException;
 import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.identity.user.helper.UserHelper;
 import org.springframework.security.core.Authentication;
@@ -24,7 +26,7 @@ public class AddressServiceImpl extends BaseServiceImpl<Address> implements Addr
                               AddressHelper addressHelper,
                               AddressMapper addressMapper,
                               UserHelper userHelper) {
-        super(addressRepository, Address.class);
+        super(addressRepository, Address.class, ErrorCode.ADDRESS_NOT_FOUND);
         this.addressRepository = addressRepository;
         this.addressHelper = addressHelper;
         this.addressMapper = addressMapper;
@@ -53,7 +55,7 @@ public class AddressServiceImpl extends BaseServiceImpl<Address> implements Addr
 
         List<Address> allAddresses = addressRepository.findAllByUser_Id(user.getId());
         if (allAddresses.isEmpty()){
-            throw new RuntimeException("User không có địa chỉ nào");
+            throw new IdentityException(ErrorCode.USER_HAS_NO_ADDRESS);
         }
         return allAddresses;
     }
@@ -63,7 +65,7 @@ public class AddressServiceImpl extends BaseServiceImpl<Address> implements Addr
         addressHelper.validateAddressId(addressId);
 
         if (!addressRepository.existsById(addressId)) {
-            throw new RuntimeException("Địa chỉ không tồn tại");
+            throw new IdentityException(ErrorCode.ADDRESS_NOT_FOUND);
         }
         addressRepository.deleteById(addressId);
     }
@@ -75,7 +77,7 @@ public class AddressServiceImpl extends BaseServiceImpl<Address> implements Addr
 
         User user = userHelper.getUserFromAuthentication(authentication);
         Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại"));
+                .orElseThrow(() -> new IdentityException(ErrorCode.ADDRESS_NOT_FOUND));
 
         if (Boolean.TRUE.equals(addressDTO.getIsDefault())) {
             unsetCurrentDefaultAddress(user.getId(), address.getId());
@@ -95,7 +97,7 @@ public class AddressServiceImpl extends BaseServiceImpl<Address> implements Addr
 
         for (Address address : addressRepository.findByUser_Id(userId)) {
             if (address.getAddress().equals(newAddress)) {
-                throw new RuntimeException("User đã có địa chỉ này rồi");
+                throw new IdentityException(ErrorCode.ADDRESS_ALREADY_EXISTS);
             }
             if (address.getIsDefault()) {
                 defaultAddress = address;

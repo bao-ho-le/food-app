@@ -36,18 +36,8 @@ public class UserDishController {
             @ApiResponse(responseCode = "404", description = "Không thể lấy giỏ hàng")
     })
     @GetMapping
-    public ResponseEntity<?> getAllUserDishes(Authentication authentication){
-        try{
-            List<UserDish> userDishes = userDishService.getAllUserDishesByUserId(authentication);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(userDishes);
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<UserDish>> getAllUserDishes(Authentication authentication){
+        return ResponseEntity.ok(userDishService.getAllUserDishesByUserId(authentication));
     }
 
     @Operation(summary = "Thêm món vào giỏ hàng", description = "Thêm một món ăn với số lượng chỉ định vào giỏ hàng.")
@@ -56,19 +46,10 @@ public class UserDishController {
             @ApiResponse(responseCode = "400", description = "Món ăn không tồn tại hoặc dữ liệu không hợp lệ")
     })
     @PostMapping
-    public ResponseEntity<?> addUserDish(Authentication authentication, @Valid @RequestBody UserDishDTO userDishDTO){
-        try {
-            userDishService.addUserDish(authentication, userDishDTO);
+    public ResponseEntity<Void> addUserDish(Authentication authentication, @Valid @RequestBody UserDishDTO userDishDTO){
+        userDishService.addUserDish(authentication, userDishDTO);
 
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .build();
-
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @Operation(summary = "Xoá món khỏi giỏ hàng", description = "Xoá một mục khỏi giỏ hàng theo ID.")
@@ -76,19 +57,11 @@ public class UserDishController {
             @ApiResponse(responseCode = "200", description = "Xoá thành công")
     })
     @DeleteMapping("/{user_dish_id}")
-    public ResponseEntity<?> deleteById(
+    public ResponseEntity<Void> deleteById(
             @Parameter(description = "ID của mục trong giỏ hàng") @PathVariable(name="user_dish_id") Integer userDishId){
-        try{
-            userDishService.deleteUserDishById(userDishId);
+        userDishService.deleteUserDishById(userDishId);
 
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .build();
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "Cập nhật số lượng", description = "Cập nhật số lượng của một món trong giỏ hàng.")
@@ -97,17 +70,9 @@ public class UserDishController {
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
     })
     @PutMapping
-    public ResponseEntity<?> updateQuantity(@Valid @RequestBody UpdateDishQuantityDTO dto){
-        try{
-            userDishService.updateQuantity(dto.getUserDishId(), dto.getQuantity());
+    public ResponseEntity<Void> updateQuantity(@Valid @RequestBody UpdateDishQuantityDTO dto){
+        userDishService.updateQuantity(dto.getUserDishId(), dto.getQuantity());
 
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .build();
-        } catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok().build();
     }
 }

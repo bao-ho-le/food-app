@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,63 +40,25 @@ public class RestaurantController {
             @ApiResponse(responseCode = "404", description = "Không thể lấy danh sách nhà hàng")
     })
     @GetMapping
-    public ResponseEntity<?> getAllRestaurants(){
-        try{
-            List<Restaurant> restaurants = restaurantService.getAllRestaurants();
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(restaurants);
-        }catch(Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Restaurant>> getAllRestaurants(){
+        return ResponseEntity.ok(restaurantService.getAllRestaurants());
     }
 
     @PostMapping
-    public ResponseEntity<?> createRestaurant(@Valid @RequestBody Restaurant restaurant){
-        try {
-            Restaurant newRestaurant = restaurantService.createRestaurant(restaurant);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(newRestaurant);
-        }catch(Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<Restaurant> createRestaurant(@Valid @RequestBody Restaurant restaurant){
+        return ResponseEntity.ok(restaurantService.createRestaurant(restaurant));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateRestaurant(@PathVariable Integer id, @RequestBody Restaurant restaurant) {
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(restaurantService.updateRestaurant(id, restaurant));
-        }catch(Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable Integer id, @RequestBody Restaurant restaurant) {
+        return ResponseEntity.ok(restaurantService.updateRestaurant(id, restaurant));
     }
-
-
 
     @PostMapping("/blocking/{id}/{type}")
-    public ResponseEntity<?> blocking(@PathVariable Integer id, @PathVariable Integer type){
-        try{
-           restaurantService.blocking(id, type);
+    public ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type){
+        restaurantService.blocking(id, type);
 
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body("Success");
-        }catch(Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok("Success");
     }
-    
+
 }

@@ -1,6 +1,7 @@
 package com.example.foodie.ordering.order.controller;
 
 import com.example.foodie.ordering.order.dto.request.OrderDTO;
+import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
 import com.example.foodie.common.base.BaseController;
 import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.ordering.order.entity.Order;
@@ -18,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCHEME;
 
@@ -39,16 +42,8 @@ public class OrderController extends BaseController<Order>{
             @ApiResponse(responseCode = "400", description = "Không thể lấy danh sách đơn hàng")
     })
     @GetMapping("/user")
-    public ResponseEntity<?> getAllOrdersByUserId(Authentication authentication){
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(orderService.getAllOrdersByUserId(authentication));   
-        } catch(RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Order>> getAllOrdersByUserId(Authentication authentication){
+        return ResponseEntity.ok(orderService.getAllOrdersByUserId(authentication));
     }
 
     @Operation(summary = "Lấy chi tiết đơn hàng", description = "Trả về danh sách món ăn trong một đơn hàng cụ thể.")
@@ -57,17 +52,9 @@ public class OrderController extends BaseController<Order>{
             @ApiResponse(responseCode = "400", description = "Đơn hàng không tồn tại")
     })
     @GetMapping("/user/{order_id}")
-    public ResponseEntity<?> getAllOrderItems(
+    public ResponseEntity<List<OrderDishResponseDTO>> getAllOrderItems(
             @Parameter(description = "ID của đơn hàng") @PathVariable(name="order_id") Integer orderId){
-        try{
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(orderService.getAllOrderItems(orderId));   
-        } catch(RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+        return ResponseEntity.ok(orderService.getAllOrderItems(orderId));
     }
 
     @Operation(summary = "Tạo đơn hàng", description = "Tạo đơn hàng mới từ giỏ hàng hiện tại của người dùng, giao tới địa chỉ chỉ định.")
@@ -76,18 +63,9 @@ public class OrderController extends BaseController<Order>{
             @ApiResponse(responseCode = "400", description = "Địa chỉ không hợp lệ hoặc giỏ hàng trống")
     })
     @PostMapping
-    public ResponseEntity<?> createOrder(Authentication authentication,@Valid @RequestBody OrderDTO orderDTO){
-        try {
-            Order newOrder = orderService.createOrder(authentication, orderDTO.getAddressId());
-
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(newOrder);
-
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<Order> createOrder(Authentication authentication,@Valid @RequestBody OrderDTO orderDTO){
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(orderService.createOrder(authentication, orderDTO.getAddressId()));
     }
 }

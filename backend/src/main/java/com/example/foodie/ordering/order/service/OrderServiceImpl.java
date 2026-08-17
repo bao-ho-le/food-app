@@ -3,6 +3,8 @@ package com.example.foodie.ordering.order.service;
 import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.identity.address.repository.AddressRepository;
 import com.example.foodie.common.base.BaseServiceImpl;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.OrderingException;
 import com.example.foodie.catalog.image.entity.Image;
 import com.example.foodie.catalog.image.repository.ImageRepository;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
@@ -46,7 +48,7 @@ public class OrderServiceImpl extends BaseServiceImpl<Order> implements OrderSer
                             OrderHelper orderHelper,
                             OrderMapper orderMapper,
                             UserHelper userHelper) {
-        super(orderRepository, Order.class);
+        super(orderRepository, Order.class, ErrorCode.ORDER_NOT_FOUND);
         this.orderRepository = orderRepository;
         this.userDishRepository = userDishRepository;
         this.addressRepository = addressRepository;
@@ -74,13 +76,13 @@ public class OrderServiceImpl extends BaseServiceImpl<Order> implements OrderSer
         List<UserDish> allUserDishByUserId = userDishRepository.findAllByUser_Id(user.getId());
 
         if(allUserDishByUserId.isEmpty()){
-            throw new RuntimeException("Không có user dish nào");
+            throw new OrderingException(ErrorCode.ORDER_CART_EMPTY);
         }
 
         Optional<Address> address = addressRepository.findById(addressId);
 
         if (address.isEmpty()){
-            throw new RuntimeException("Không tồn tại địa chỉ này");
+            throw new OrderingException(ErrorCode.ADDRESS_NOT_FOUND);
         }
 
         Order newOrder = orderRepository.save(orderMapper.toEntity(user, address.get().getAddress()));
@@ -103,7 +105,7 @@ public class OrderServiceImpl extends BaseServiceImpl<Order> implements OrderSer
         List<OrderDish> orderDishes = orderDishRepository.findByOrder_Id(orderId);
 
         if (orderDishes.isEmpty()){
-            throw new RuntimeException("Order không tồn tại");
+            throw new OrderingException(ErrorCode.ORDER_NOT_FOUND);
         }
 
         return orderDishes.stream()

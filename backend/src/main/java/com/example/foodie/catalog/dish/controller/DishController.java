@@ -13,9 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.example.foodie.catalog.dish.dto.request.DishRequestDTO;
 
@@ -42,98 +40,35 @@ public class DishController {
     })
     @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     @GetMapping
-    public ResponseEntity<?> getAllDishes(){
-
-        try {
-            List<DishDTO> dishes = dishService.getAllDishes();
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(dishes);
-        }catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<DishDTO>> getAllDishes(){
+        return ResponseEntity.ok(dishService.getAllDishes());
     }
 
     @GetMapping("/{dishId}/tags")
-    public ResponseEntity<?> getTagsByDishId(@PathVariable Integer dishId){
-        try {
-            List<Tag> tags = dishService.getAllTags(dishId); // gọi service để lấy tag
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(tags);
-        } catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Tag>> getTagsByDishId(@PathVariable Integer dishId){
+        return ResponseEntity.ok(dishService.getAllTags(dishId));
     }
 
     @PostMapping
-    public ResponseEntity<?> createDish(@Valid @RequestBody DishRequestDTO dishRequestDTO){
-
-        try{
-            Dish newDish = dishService.createDish(dishRequestDTO);
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(newDish);
-        }catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<Dish> createDish(@Valid @RequestBody DishRequestDTO dishRequestDTO){
+        return ResponseEntity.ok(dishService.createDish(dishRequestDTO));
     }
 
     @GetMapping("/average_rating")
-    public ResponseEntity<?> average_rating(){
-
-        try{
-            List<Float> dishes_rating = dishService.getAverageRatings();
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(dishes_rating);
-        }catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Float>> average_rating(){
+        return ResponseEntity.ok(dishService.getAverageRatings());
     }
 
     @GetMapping("/allIds")
-    public ResponseEntity<?> getAllDishId(){
-
-        try{
-            List<Integer> dallDishId = dishService.getAllDishId();
-
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(dallDishId);
-        }catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
+    public ResponseEntity<List<Integer>> getAllDishId(){
+        return ResponseEntity.ok(dishService.getAllDishId());
     }
 
     @PostMapping("/blocking/{id}/{type}")
-    public ResponseEntity<?> blocking(@PathVariable Integer id, @PathVariable Integer type){
-        try{
-           dishService.blocking(id, type);
+    public ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type){
+        dishService.blocking(id, type);
 
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body("Success");
-        }catch (Exception e){
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(e.getMessage());
-        }
-        
+        return ResponseEntity.ok("Success");
     }
-    
+
 }

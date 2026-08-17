@@ -15,6 +15,8 @@ import com.example.foodie.catalog.restaurant.repository.RestaurantRepository;
 import com.example.foodie.catalog.dishtag.service.DishTagService;
 import com.example.foodie.catalog.tag.entity.Tag;
 import com.example.foodie.catalog.tag.repository.TagRepository;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.CatalogException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +43,7 @@ public class DishServiceImpl implements DishService {
         List<Dish> dishes = dishRepository.findAll();
 
         if (dishes.isEmpty()) {
-            throw new RuntimeException("Không có món nào");
+            throw new CatalogException(ErrorCode.DISH_NOT_FOUND);
         }
 
         return dishes.stream()
@@ -65,7 +67,7 @@ public class DishServiceImpl implements DishService {
         dishHelper.validateDishRequest(dishRequestDTO);
 
         Restaurant restaurant = restaurantRepository.findById(dishRequestDTO.getRestaurantId())
-                .orElseThrow(() -> new RuntimeException("Nha Hang không tồn tại"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND));
 
         Dish savedDish = dishRepository.save(dishMapper.toEntity(dishRequestDTO, restaurant));
 
@@ -115,7 +117,7 @@ public class DishServiceImpl implements DishService {
         dishHelper.validateBlockingType(type);
 
         Dish dish = dishRepository.findById(dishId)
-                .orElseThrow(() -> new RuntimeException("Dish không tồn tại"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
 
         dish.setAvailable(type == 1);
 

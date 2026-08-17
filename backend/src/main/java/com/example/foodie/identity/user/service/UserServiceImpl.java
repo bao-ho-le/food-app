@@ -1,5 +1,7 @@
 package com.example.foodie.identity.user.service;
 
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.IdentityException;
 import com.example.foodie.security.CustomUserDetails;
 import com.example.foodie.security.JWTService;
 import com.example.foodie.identity.user.dto.request.AdminDTO;
@@ -44,14 +46,14 @@ public class UserServiceImpl implements UserService {
         userHelper.validateUserRequest(userDTO);
 
         if(userRepository.existsByEmail(userDTO.getEmail())){
-            throw new RuntimeException("Email đã tồn tại");
+            throw new IdentityException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
         else if(existsByPhoneNumber(userDTO.getPhoneNumber())){
-            throw new RuntimeException("Sdt đã tồn tại");
+            throw new IdentityException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
 
         Role role = roleRepository.findByRoleName(RoleName.USER)
-                .orElseThrow(() -> new RuntimeException("Role USER không tồn tại trong database"));
+                .orElseThrow(() -> new IdentityException(ErrorCode.USER_ROLE_NOT_FOUND));
 
         String encodedPassword = encoder.encode(userDTO.getPassword());
         userDTO.setPassword(encodedPassword);
@@ -68,14 +70,14 @@ public class UserServiceImpl implements UserService {
         userHelper.validateUserRequest(adminDTO);
 
         if (userRepository.existsByEmail(adminDTO.getEmail())){
-            throw new RuntimeException("Email đã tồn tại");
+            throw new IdentityException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
         }
         else if (existsByPhoneNumber(adminDTO.getPhoneNumber())) {
-            throw new RuntimeException("Sdt đã tồn tại");
+            throw new IdentityException(ErrorCode.USER_PHONE_ALREADY_EXISTS);
         }
 
         Role role = roleRepository.findByRoleName(RoleName.ADMIN)
-                .orElseThrow(() -> new RuntimeException("Role ADMIN không tồn tại"));
+                .orElseThrow(() -> new IdentityException(ErrorCode.USER_ROLE_NOT_FOUND));
 
         String encodedPassword = encoder.encode(adminDTO.getPassword());
         adminDTO.setPassword(encodedPassword);
@@ -106,7 +108,7 @@ public class UserServiceImpl implements UserService {
         userHelper.validateResetPasswordRequest(resetPasswordDTO);
 
         User user = userRepository.findByEmail(resetPasswordDTO.getEmail())
-                .orElseThrow(() -> new RuntimeException("Email không đúng"));
+                .orElseThrow(() -> new IdentityException(ErrorCode.USER_NOT_FOUND));
 
         if (encoder.matches(resetPasswordDTO.getOldPassword(), user.getPassword())){
             String encodedPassword = encoder.encode(resetPasswordDTO.getNewPassword());
@@ -114,7 +116,7 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
         }
         else {
-            throw new RuntimeException("Password không đúng");
+            throw new IdentityException(ErrorCode.USER_OLD_PASSWORD_INCORRECT);
         }
     }
 
@@ -152,7 +154,7 @@ public class UserServiceImpl implements UserService {
         userHelper.validateEmail(email);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+                .orElseThrow(() -> new IdentityException(ErrorCode.USER_NOT_FOUND));
 
         return userMapper.toUserResponse(user);
     }
@@ -185,7 +187,7 @@ public class UserServiceImpl implements UserService {
         userHelper.validateBlockingType(type);
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+                .orElseThrow(() -> new IdentityException(ErrorCode.USER_NOT_FOUND));
 
         user.setActive(type == 1);
 

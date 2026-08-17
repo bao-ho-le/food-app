@@ -1,6 +1,9 @@
 package com.example.foodie.feedback.review.service;
 
 import com.example.foodie.catalog.dish.repository.DishRepository;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.CatalogException;
+import com.example.foodie.common.exception.business_exception.OrderingException;
 import com.example.foodie.ordering.order.entity.OrderDish;
 import com.example.foodie.ordering.order.repository.OrderDishRepository;
 import com.example.foodie.feedback.review.dto.response.ReviewResponseDTO;
@@ -27,7 +30,7 @@ public class ReviewServiceImpl implements ReviewService {
         reviewHelper.validateDishId(dishId);
 
         dishRepository.findById(dishId)
-                .orElseThrow(() -> new RuntimeException("Không tồn tại dish này"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
 
         return orderDishRepository.findAllByDishId(dishId).stream()
                 .filter(orderDish -> orderDish.getReview() != null)
@@ -41,7 +44,7 @@ public class ReviewServiceImpl implements ReviewService {
         reviewHelper.validateReviewRequest(review);
 
         OrderDish orderDish = orderDishRepository.findById(orderDishId)
-                .orElseThrow(() -> new RuntimeException("order dish không tồn tại"));
+                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_DISH_NOT_FOUND));
 
         reviewHelper.validateNotReviewed(orderDish);
 

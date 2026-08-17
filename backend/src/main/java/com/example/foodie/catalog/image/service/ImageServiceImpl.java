@@ -9,6 +9,8 @@ import com.example.foodie.catalog.image.entity.Image;
 import com.example.foodie.catalog.image.helper.ImageHelper;
 import com.example.foodie.catalog.image.mapper.ImageMapper;
 import com.example.foodie.catalog.image.repository.ImageRepository;
+import com.example.foodie.common.exception.ErrorCode;
+import com.example.foodie.common.exception.business_exception.CatalogException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,14 +33,15 @@ public class ImageServiceImpl implements ImageService {
     private final ImageMapper imageMapper;
 
     @Override
-    public Map<String, Object> uploadImage(MultipartFile file, ImageDTO imageDTO){
+    public Map<String, Object> uploadImage(MultipartFile file, String json){
+        ImageDTO imageDTO = imageHelper.parseImageDTO(json);
         imageHelper.validateUploadRequest(file, imageDTO);
 
         File uploadedImage = null;
 
         try {
             Dish existingDish = dishRepository.findById(imageDTO.getDishId())
-                    .orElseThrow(() -> new RuntimeException("Không có món này"));
+                    .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
 
             uploadedImage = convertMultiPartToFile(file);
             Map<String, Object> uploadResult = cloudinary.uploader().upload(uploadedImage, ObjectUtils.emptyMap());
@@ -47,7 +50,7 @@ public class ImageServiceImpl implements ImageService {
 
             return uploadResult;
         }catch (IOException e) {
-            throw new RuntimeException("Không thể upload ảnh: " + e.getMessage());
+            throw new CatalogException(ErrorCode.IMAGE_UPLOAD_FAILED, ErrorCode.IMAGE_UPLOAD_FAILED.getMessage(), e);
         } finally {
             if (uploadedImage != null && uploadedImage.exists())
                 uploadedImage.delete();
@@ -59,7 +62,7 @@ public class ImageServiceImpl implements ImageService {
         imageHelper.validateDishId(dishId);
 
         dishRepository.findById(dishId)
-                .orElseThrow(() -> new RuntimeException("Không có món này"));
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
 
         return imageRepository.findByDish_Id(dishId);
     }
