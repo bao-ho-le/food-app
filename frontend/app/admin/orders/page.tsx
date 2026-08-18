@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MoreVertical, RefreshCw, CheckCircle2 } from "lucide-react"
+import { Search, MoreVertical, RefreshCw, CheckCircle2, Package, AlertTriangle, FilterX } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -63,6 +66,9 @@ export default function AdminOrdersPage() {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
+  const [reloadTick, setReloadTick] = useState(0)
+  const reloadOrders = () => setReloadTick((v) => v + 1)
+
   useEffect(() => {
     let isMounted = true
     setIsLoading(true)
@@ -80,7 +86,7 @@ export default function AdminOrdersPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [reloadTick])
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
@@ -213,6 +219,54 @@ export default function AdminOrdersPage() {
         </Button>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách đơn hàng</CardTitle>
+        </CardHeader>
+        <CardContent>
+        {loadError ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+                <AlertTriangle />
+              </EmptyMedia>
+              <EmptyTitle>Không thể tải danh sách đơn hàng</EmptyTitle>
+              <EmptyDescription>{loadError}</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="outline" onClick={reloadOrders}>Thử lại</Button>
+            </EmptyContent>
+          </Empty>
+        ) : isLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        ) : orders.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Package />
+              </EmptyMedia>
+              <EmptyTitle>Chưa có đơn hàng nào</EmptyTitle>
+              <EmptyDescription>Đơn hàng sẽ xuất hiện ở đây khi khách hàng bắt đầu đặt món.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : sorted.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FilterX />
+              </EmptyMedia>
+              <EmptyTitle>Không có đơn hàng phù hợp</EmptyTitle>
+              <EmptyDescription>Không có đơn hàng phù hợp với bộ lọc hiện tại.</EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="outline" onClick={resetFilters}>Đặt lại bộ lọc</Button>
+            </EmptyContent>
+          </Empty>
+        ) : (
       <div className="overflow-x-auto rounded-lg border text-[15px] sm:text-base">
         <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
           <TableHeader>
@@ -227,30 +281,7 @@ export default function AdminOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loadError && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-destructive">
-                  {loadError}
-                </TableCell>
-              </TableRow>
-            )}
-            {!loadError && isLoading && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  Đang tải danh sách...
-                </TableCell>
-              </TableRow>
-            )}
-            {!loadError && !isLoading && sorted.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  Không có đơn hàng phù hợp với bộ lọc hiện tại
-                </TableCell>
-              </TableRow>
-            )}
-            {!loadError &&
-              !isLoading &&
-              paged.map((o) => (
+              {paged.map((o) => (
                 <TableRow className="hover:bg-muted/40" key={o.id}>
                   <TableCell className="font-medium">#{o.id}</TableCell>
                   <TableCell className="max-w-[200px]">
@@ -339,6 +370,9 @@ export default function AdminOrdersPage() {
           </TableBody>
         </Table>
       </div>
+        )}
+        </CardContent>
+      </Card>
 
       {/* Order detail dialog */}
       <Dialog open={!!detailOrder} onOpenChange={(o) => { if (!o) setDetailOrder(null) }}>

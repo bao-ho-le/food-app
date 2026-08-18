@@ -1,205 +1,213 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import {
-  DollarSign,
-  Users,
-  ShoppingBag,
-  ThumbsUp,
-  ArrowUp,
-  ArrowDown,
-  MoreVertical,
-} from "lucide-react"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from "recharts"
-import Image from "next/image"
-import { Dish, Restaurant, TopSelling } from "@/types"
-import { mockDishes, mockRestaurants, mockTopSellingData } from "@/lib/mock-data"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { DollarSign, Package, Users, UtensilsCrossed, LayoutDashboard } from "lucide-react"
+import { AreaChart, Area, CartesianGrid, XAxis } from "recharts"
+import type { AdminDish, AdminOrder, AdminOrderStatus, User } from "@/types"
+import { fetchAdminOrders } from "@/services/admin-orders"
+import { fetchAllUsers } from "@/services/users"
+import { fetchAdminDishes } from "@/services/dishes"
 
-const summaryData = [
-  { name: "Sunday", Earning: 2000 },
-  { name: "Monday", Earning: 3000 },
-  { name: "Tuesday", Earning: 2500 },
-  { name: "Wednesday", Earning: 4500 },
-  { name: "Thursday", Earning: 5900 },
-  { name: "Friday", Earning: 3800 },
-  { name: "Saturday", Earning: 4200 },
-]
+const STATUS_LABEL: Record<AdminOrderStatus, string> = {
+  PENDING: "Chờ xử lý",
+  PREPARING: "Đang chuẩn bị",
+  DELIVERED: "Đã giao",
+  CANCELLED: "Đã huỷ",
+}
 
+const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
+  PENDING: "bg-amber-100 text-amber-700 ring-amber-200",
+  PREPARING: "bg-blue-100 text-blue-700 ring-blue-200",
+  DELIVERED: "bg-emerald-100 text-emerald-700 ring-emerald-200",
+  CANCELLED: "bg-rose-100 text-rose-700 ring-rose-200",
+}
 
-const topSellingItems = mockTopSellingData
-  .map((item: TopSelling) => {
-    const dish = mockDishes.find((d) => d.id === item.dishId)
-    if (!dish) {
-      return null
-    }
-    const restaurant = mockRestaurants.find((r) => r.id === dish.restaurantId)
-    return {
-      ...dish,
-      restaurantName: restaurant?.name || "N/A",
-      quantitySold: item.quantitySold,
-    }
-  })
-  .filter((item): item is Dish & { restaurantName: string; quantitySold: number } => item !== null)
+const CHART_DAYS = 14
+
+const chartConfig = {
+  revenue: {
+    label: "Doanh thu",
+    color: "var(--chart-1)",
+  },
+} satisfies ChartConfig
+
+function formatCurrency(value: number) {
+  return `${value.toLocaleString("vi-VN")}₫`
+}
 
 export default function DashboardPage() {
+  const [orders, setOrders] = useState<AdminOrder[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [dishes, setDishes] = useState<AdminDish[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    setIsLoading(true)
+    setLoadError(null)
+    Promise.all([fetchAdminOrders(), fetchAllUsers(), fetchAdminDishes()])
+      .then(([ordersData, usersData, dishesData]) => {
+        if (!isMounted) return
+        setOrders(ordersData)
+        setUsers(usersData)
+        setDishes(dishesData)
+      })
+      .catch((error) => {
+        if (isMounted) setLoadError(error instanceof Error ? error.message : "Không thể tải dữ liệu dashboard.")
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const totalRevenue = useMemo(
+    () => orders.filter((o) => o.status === "DELIVERED").reduce((sum, o) => sum + o.totalPrice, 0),
+    [orders],
+  )
+  const totalDishesAvailable = useMemo(() => dishes.filter((d) => d.isAvailable).length, [dishes])
+
+  const chartData = useMemo(() => {
+    const byDay = new Map<string, number>()
+    orders
+      .filter((o) => o.status === "DELIVERED")
+      .forEach((o) => {
+        const day = new Date(o.createdAt).toISOString().slice(0, 10)
+        byDay.set(day, (byDay.get(day) ?? 0) + o.totalPrice)
+      })
+    return Array.from(byDay.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-CHART_DAYS)
+      .map(([day, revenue]) => ({
+        day: new Date(day).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }),
+        revenue,
+      }))
+  }, [orders])
+
+  const recentOrders = useMemo(
+    () =>
+      [...orders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 8),
+    [orders],
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 space-y-10 bg-background p-4 md:px-18 md:py-10">
+        <Skeleton className="h-10 w-64" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-[380px] rounded-xl" />
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex-1 p-4 md:px-18 md:py-10">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+              <LayoutDashboard />
+            </EmptyMedia>
+            <EmptyTitle>Không thể tải dashboard</EmptyTitle>
+            <EmptyDescription>{loadError}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    )
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="flex-1 p-4 md:px-18 md:py-10">
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <LayoutDashboard />
+            </EmptyMedia>
+            <EmptyTitle>Chưa có dữ liệu để hiển thị</EmptyTitle>
+            <EmptyDescription>Hệ thống chưa có đơn hàng nào. Số liệu sẽ xuất hiện khi có đơn hàng đầu tiên.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 space-y-10 bg-background p-4 md:px-18 md:py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-bold">Dashboard</h1>
-        <div className="flex items-center space-x-2">
-          <Select defaultValue="week">
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Day</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <h1 className="text-4xl font-bold">Dashboard</h1>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Tổng doanh thu" value={formatCurrency(totalRevenue)} icon={<DollarSign className="h-6 w-6 text-white" />} iconBgColor="bg-indigo-500" />
+        <StatCard title="Tổng đơn hàng" value={orders.length.toLocaleString("vi-VN")} icon={<Package className="h-6 w-6 text-white" />} iconBgColor="bg-blue-500" />
+        <StatCard title="Tổng người dùng" value={users.length.toLocaleString("vi-VN")} icon={<Users className="h-6 w-6 text-white" />} iconBgColor="bg-yellow-500" />
+        <StatCard title="Món ăn đang bán" value={totalDishesAvailable.toLocaleString("vi-VN")} icon={<UtensilsCrossed className="h-6 w-6 text-white" />} iconBgColor="bg-cyan-500" />
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Earning"
-          value="$10,236"
-          change="3.01%"
-          isPositive
-          icon={<DollarSign className="h-6 w-6 text-white" />}
-          iconBgColor="bg-indigo-500"
-          chartColor="indigo"
-        />
-        <StatCard
-          title="Daily Customers"
-          value="36,531"
-          change="3.01%"
-          isPositive={false}
-          icon={<Users className="h-6 w-6 text-white" />}
-          iconBgColor="bg-yellow-500"
-          chartColor="yellow"
-        />
-        <StatCard
-          title="New Orders"
-          value="52,416"
-          change="3.01%"
-          isPositive
-          icon={<ShoppingBag className="h-6 w-6 text-white" />}
-          iconBgColor="bg-blue-500"
-          chartColor="blue"
-        />
-        <StatCard
-          title="New Feedback"
-          value="13,924"
-          change="52.1%"
-          isPositive
-          icon={<ThumbsUp className="h-6 w-6 text-white" />}
-          iconBgColor="bg-cyan-500"
-          chartColor="cyan"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-13 lg:grid-cols-3 py-4">
-        {/* Summary Chart */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Summary</CardTitle>
-              <Select defaultValue="last-week">
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="last-week">Last Week</SelectItem>
-                  <SelectItem value="last-month">Last Month</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <CardTitle>Doanh thu theo ngày</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={summaryData}>
-                <defs>
-                  <linearGradient id="colorEarning" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `${value / 1000}k`} />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "8px",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                    border: "none",
-                  }}
-                />
-                <Area type="monotone" dataKey="Earning" stroke="#8884d8" fillOpacity={1} fill="url(#colorEarning)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <CardContent>
+            {chartData.length === 0 ? (
+              <p className="py-16 text-center text-sm text-muted-foreground">Chưa có đơn hàng đã giao để tính doanh thu.</p>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-[320px] w-full">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                  <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                  <Area type="monotone" dataKey="revenue" stroke="var(--color-revenue)" fillOpacity={1} fill="url(#colorRevenue)" />
+                </AreaChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* Top Selling Items */}
-        <Card className="rounded-3xl">
-          <CardHeader className="flex flex-row items-center justify-between px-7 pt-2 pb-0">
-            <CardTitle className="text-xl font-bold">Best Sellers</CardTitle>
-            <Button variant="link" className="text-base">
-              View all
-            </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Đơn hàng gần đây</CardTitle>
           </CardHeader>
-          <CardContent className="px-3">
-            <ScrollArea className="h-[350px]">
-              <div className="flex flex-col">
-                {topSellingItems.map((item, index) => (
-                  <div key={item.id}>
-                    <div className="flex items-center justify-between pb-5 px-7">
-                      <div className="flex items-center space-x-4">
-                        <Image
-                          src={item.image!}
-                          alt={item.name!}
-                          width={56}
-                          height={56}
-                          className="rounded-lg object-cover"
-                        />
-                        <div className="max-w-[150px]">
-                          <p className="truncate font-semibold text-base">{item.name}</p>
-                          <p className="truncate text-sm text-muted-foreground">{item.restaurantName}</p>
-                        </div>
-                      </div>
-                      <div className="w-16 text-right">
-                        <p className="font-bold text-lg">{item.quantitySold}</p>
-                      </div>
-                    </div>
-
-                    {/* --- đường kẻ giữa các item --- */}
-                    {index < topSellingItems.length - 1 && (
-                        <div className="border-b border-gray-200 dark:border-gray-700 mx-7 mb-5"></div>
-                    )}
-                  </div>
-                  
-                ))}
+          <CardContent className="space-y-4">
+            {recentOrders.map((order) => (
+              <div key={order.id} className="flex items-center justify-between gap-3 border-b pb-3 last:border-b-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">#{order.id} · {order.customerName}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="text-sm font-semibold">{formatCurrency(order.totalPrice)}</span>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${STATUS_BADGE_CLASS[order.status]}`}>
+                    {STATUS_LABEL[order.status]}
+                  </span>
+                </div>
               </div>
-            </ScrollArea>
+            ))}
           </CardContent>
-
         </Card>
       </div>
     </div>
@@ -209,76 +217,20 @@ export default function DashboardPage() {
 interface StatCardProps {
   title: string
   value: string
-  change: string
-  isPositive: boolean
   icon: React.ReactNode
   iconBgColor: string
-  chartColor: "indigo" | "yellow" | "blue" | "cyan"
 }
 
-const chartData = {
-  indigo: [
-    { x: 0, y: 12 }, { x: 1, y: 20 }, { x: 2, y: 16 }, { x: 3, y: 25 },
-    { x: 4, y: 18 }, { x: 5, y: 28 }, { x: 6, y: 15 }, { x: 7, y: 27 },
-  ],
-  yellow: [
-    { x: 0, y: 22 }, { x: 1, y: 14 }, { x: 2, y: 18 }, { x: 3, y: 12 },
-    { x: 4, y: 16 }, { x: 5, y: 10 }, { x: 6, y: 15 }, { x: 7, y: 11 },
-  ],
-  blue: [
-    { x: 0, y: 15 }, { x: 1, y: 25 }, { x: 2, y: 19 }, { x: 3, y: 28 },
-    { x: 4, y: 22 }, { x: 5, y: 30 }, { x: 6, y: 20 }, { x: 7, y: 27 },
-  ],
-  cyan: [
-    { x: 0, y: 20 }, { x: 1, y: 12 }, { x: 2, y: 18 }, { x: 3, y: 10 },
-    { x: 4, y: 16 }, { x: 5, y: 11 }, { x: 6, y: 19 }, { x: 7, y: 13 },
-  ],
-}
-
-
-
-
-const chartColors = {
-  indigo: "#6366F1",
-  yellow: "#FBBF24",
-  blue: "#3B82F6",
-  cyan: "#22D3EE",
-}
-
-function StatCard({ title, value, change, isPositive, icon, iconBgColor, chartColor }: StatCardProps) {
-  const ChangeIcon = isPositive ? ArrowUp : ArrowDown
-  const changeColor = isPositive ? "text-green-500" : "text-red-500"
-
+function StatCard({ title, value, icon, iconBgColor }: StatCardProps) {
   return (
     <Card className="rounded-3xl shadow-sm">
       <CardContent className="px-8">
-        <div className="flex items-center justify-between">
-          <div className={`flex h-12 w-12 items-center justify-center rounded-full ${iconBgColor}`}>
-            {icon}
-          </div>
-          <div className="h-18 w-20">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData[chartColor]}>
-                <Line
-                  type="monotone"
-                  dataKey="y"
-                  stroke={chartColors[chartColor]}
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-full ${iconBgColor}`}>
+          {icon}
         </div>
         <div className="mt-3">
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold">{value}</p>
-            <div className={`flex items-center text-base font-semibold ${changeColor}`}>
-              <ChangeIcon className="mr-0.5 h-4 w-4" />
-              {change}
-            </div>
-          </div>
-          <p className="mt-2 text-1xl text-muted-foreground">{title}</p>
+          <p className="text-3xl font-bold">{value}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{title}</p>
         </div>
       </CardContent>
     </Card>

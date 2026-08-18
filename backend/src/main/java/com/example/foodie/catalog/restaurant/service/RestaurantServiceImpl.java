@@ -18,12 +18,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public List<Restaurant> getAllRestaurants(){
-        List<Restaurant> restaurants = restaurantRepository.findAll();
-
-        if (restaurants.isEmpty()){
-            throw new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND);
-        }
-        return restaurants;
+        return restaurantRepository.findAll();
     }
 
     @Override

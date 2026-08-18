@@ -3,10 +3,12 @@
 import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-// Removed card wrapper for simpler layout
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, Phone, MapPin, Plus, CheckCircle2 } from "lucide-react"
+import { Search, MoreVertical, Phone, MapPin, Plus, CheckCircle2, Store, AlertTriangle, FilterX } from "lucide-react"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
@@ -132,6 +134,11 @@ export default function RestaurantsPage() {
   useEffect(() => { setPage(1) }, [searchQuery])
   useEffect(() => { if (page > totalPages) setPage(totalPages) }, [totalPages, page])
 
+  function resetFilters() {
+    setSearchQuery('')
+    setPage(1)
+  }
+
   return (
     <div className="space-y-8 px-20 py-10 bg-background flex-1">
       <div className="text-center">
@@ -221,6 +228,59 @@ export default function RestaurantsPage() {
             </DialogContent>
           </Dialog>
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Danh sách quán ăn</CardTitle>
+          </CardHeader>
+          <CardContent>
+          {error && !loading ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+                  <AlertTriangle />
+                </EmptyMedia>
+                <EmptyTitle>Không thể tải danh sách quán ăn</EmptyTitle>
+                <EmptyDescription>{error}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={refresh}>Thử lại</Button>
+              </EmptyContent>
+            </Empty>
+          ) : loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
+          ) : restaurants.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Store />
+                </EmptyMedia>
+                <EmptyTitle>Chưa có quán ăn nào</EmptyTitle>
+                <EmptyDescription>Chưa có quán ăn nào trong hệ thống. Bắt đầu bằng cách thêm quán ăn đầu tiên.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />Thêm quán ăn
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : filtered.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FilterX />
+                </EmptyMedia>
+                <EmptyTitle>Không có quán ăn phù hợp</EmptyTitle>
+                <EmptyDescription>Không có quán ăn phù hợp với bộ lọc hiện tại.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={resetFilters}>Xoá bộ lọc</Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
         <div className="overflow-x-auto rounded-lg border">
           <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
             <TableHeader>
@@ -233,24 +293,7 @@ export default function RestaurantsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Đang tải danh sách...</TableCell>
-                </TableRow>
-              )}
-              {error && !loading && (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-destructive">Lỗi tải dữ liệu: {error}</TableCell>
-                </TableRow>
-              )}
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                    Không có quán ăn phù hợp với bộ lọc hiện tại
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paged.map((r) => (
+                {paged.map((r) => (
                   <TableRow className="hover:bg-muted/40" key={r.id}>
                     <TableCell className="font-medium max-w-[260px]">
                       <div className="flex items-center gap-3">
@@ -339,11 +382,13 @@ export default function RestaurantsPage() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
+                ))}
             </TableBody>
           </Table>
         </div>
+          )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit Restaurant Dialog */}

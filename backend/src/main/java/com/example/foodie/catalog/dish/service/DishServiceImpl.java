@@ -42,10 +42,6 @@ public class DishServiceImpl implements DishService {
     public List<DishDTO> getAllDishes() {
         List<Dish> dishes = dishRepository.findAll();
 
-        if (dishes.isEmpty()) {
-            throw new CatalogException(ErrorCode.DISH_NOT_FOUND);
-        }
-
         return dishes.stream()
                 .map(dish -> dishMapper.toDto(
                         dish,

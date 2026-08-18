@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, CheckCircle2 } from "lucide-react"
+import { Search, MoreVertical, CheckCircle2, Users as UsersIcon, AlertTriangle, FilterX } from "lucide-react"
 import type { User } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { useAdminUsers } from "@/hooks/users/use-admin-users"
@@ -24,7 +26,7 @@ export default function UsersPage() {
   const pageSize = 10
 
   const { toast } = useToast()
-  const { data: users, loading, error, setData: setUsers } = useAdminUsers()
+  const { data: users, loading, error, setData: setUsers, refresh } = useAdminUsers()
   const [confirmUser, setConfirmUser] = useState<User | null>(null)
   const [confirmRoleUser, setConfirmRoleUser] = useState<User | null>(null)
   const [blockingId, setBlockingId] = useState<string | null>(null)
@@ -116,6 +118,12 @@ export default function UsersPage() {
     }
   }
 
+  function resetFilters() {
+    setSearchQuery("")
+    setQuickFilter("all")
+    setPage(1)
+  }
+
   const handleToggleRole = (u: User) => {
     const nextRole: User["role"] = u.role === 'admin' ? 'user' : 'admin'
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: nextRole } : x))
@@ -185,6 +193,49 @@ export default function UsersPage() {
           </div>
         </CardHeader>
         <CardContent className="pt-0">
+          {error ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+                  <AlertTriangle />
+                </EmptyMedia>
+                <EmptyTitle>Không thể tải danh sách người dùng</EmptyTitle>
+                <EmptyDescription>{error}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={refresh}>Thử lại</Button>
+              </EmptyContent>
+            </Empty>
+          ) : loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
+              ))}
+            </div>
+          ) : users.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <UsersIcon />
+                </EmptyMedia>
+                <EmptyTitle>Chưa có người dùng nào</EmptyTitle>
+                <EmptyDescription>Chưa có người dùng nào trong hệ thống.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : filteredUsers.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FilterX />
+                </EmptyMedia>
+                <EmptyTitle>Không có người dùng phù hợp</EmptyTitle>
+                <EmptyDescription>Không có người dùng phù hợp với bộ lọc hiện tại.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={resetFilters}>Xoá bộ lọc</Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
           <div className="overflow-x-auto rounded-lg border">
             <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
               <TableHeader>
@@ -198,26 +249,7 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                      Đang tải danh sách người dùng...
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-destructive">
-                      {error}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                      Không có người dùng phù hợp với bộ lọc hiện tại
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pagedUsers.map((user) => (
+                  {pagedUsers.map((user) => (
                   <TableRow className="hover:bg-muted/40" key={user.id}>
                     <TableCell className="font-medium max-w-[240px]">
                       <div className="flex items-center gap-3">
@@ -264,10 +296,11 @@ export default function UsersPage() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )))}
+                  ))}
               </TableBody>
             </Table>
           </div>
+          )}
         </CardContent>
       </Card>
 

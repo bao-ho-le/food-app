@@ -60,12 +60,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> getAll(){
-        List<Order> allOrders = orderRepository.findAll();
-
-        if (allOrders.isEmpty()){
-            throw new OrderingException(ErrorCode.ORDER_NOT_FOUND);
-        }
-        return allOrders;
+        return orderRepository.findAll();
     }
 
     @Override

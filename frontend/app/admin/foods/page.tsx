@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, RefreshCw } from "lucide-react"
+import { Star, RefreshCw, UtensilsCrossed, AlertTriangle, FilterX } from "lucide-react"
 import { Search, MoreVertical, Plus, CheckCircle2 } from "lucide-react"
 import type { Dish, AdminDish, Tag, Category } from "@/types"
 import { createDish, fetchAdminDishes, setDishBlocking } from "@/services/dishes"
@@ -173,6 +176,8 @@ export default function FoodsPage() {
   const [dishes, setDishes] = useState<AdminDish[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [reloadTick, setReloadTick] = useState(0)
+  const reloadDishes = () => setReloadTick((v) => v + 1)
 
   useEffect(() => {
     let isMounted = true
@@ -195,7 +200,16 @@ export default function FoodsPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [reloadTick])
+
+  function resetFilters() {
+    setStatus('all')
+    setMinPrice('')
+    setMaxPrice('')
+    setSearchQuery('')
+    setPage(1)
+    setSortBy('price_asc')
+  }
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
@@ -515,97 +529,130 @@ export default function FoodsPage() {
               <SelectItem value="rating_asc">Đánh giá ↑</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" className="h-10 w-10" title="Đặt lại bộ lọc" onClick={() => { setStatus('all'); setMinPrice(''); setMaxPrice(''); setSearchQuery(''); setPage(1); setSortBy('price_asc') }}>
+          <Button variant="outline" size="icon" className="h-10 w-10" title="Đặt lại bộ lọc" onClick={resetFilters}>
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border text-[15px] sm:text-base">
-        <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[10%] min-w-[100px]">Hình ảnh</TableHead>
-              <TableHead className="w-[26%] min-w-[200px]">Tên món</TableHead>
-              <TableHead className="w-[26%] min-w-[220px]">Tên quán</TableHead>
-              <TableHead className="w-[12%] min-w-[120px]">Giá tiền</TableHead>
-              <TableHead className="w-[10%]">Đánh giá</TableHead>
-              <TableHead className="w-[12%]">Tình trạng</TableHead>
-              <TableHead className="w-[8%] text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loadError && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-destructive">
-                  {loadError}
-                </TableCell>
-              </TableRow>
-            )}
-            {!loadError && filtered.length === 0 && !isLoading && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  Không có món ăn phù hợp với bộ lọc hiện tại
-                </TableCell>
-              </TableRow>
-            )}
-            {!loadError && isLoading && (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  Đang tải danh sách...
-                </TableCell>
-              </TableRow>
-            )}
-            {!loadError &&
-              !isLoading &&
-              paged.map((d) => (
-                <TableRow className="hover:bg-muted/40" key={d.id}>
-                  <TableCell>
-                    <img src={d.image} alt={d.name} className="h-12 w-16 object-cover rounded-md border" />
-                  </TableCell>
-                  <TableCell className="font-medium max-w-[260px]">
-                    <span className="text-sm sm:text-base font-semibold leading-tight truncate" title={d.name}>{d.name}</span>
-                  </TableCell>
-                  <TableCell className="max-w-[300px]">
-                    <span className="truncate" title={getRestaurantName(d)}>{getRestaurantName(d)}</span>
-                  </TableCell>
-                  <TableCell>
-                    {d.price.toLocaleString("vi-VN")}₫
-                  </TableCell>
-                  <TableCell>
-                    <div className="inline-flex items-center gap-1">
-                      <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                      <span className="tabular-nums font-medium">{d.rating.toFixed(1)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {d.isAvailable ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang bán</span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Ngưng bán</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setEditing(d); setEditOpen(true) }}>Chỉnh sửa</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setConfirmDish(d)}>
-                          {d.isAvailable ? "Tạm ngưng bán" : "Mở bán lại"}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+      <Card>
+        <CardHeader>
+          <CardTitle>Danh sách món ăn</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadError ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+                  <AlertTriangle />
+                </EmptyMedia>
+                <EmptyTitle>Không thể tải danh sách món ăn</EmptyTitle>
+                <EmptyDescription>{loadError}</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={reloadDishes}>Thử lại</Button>
+              </EmptyContent>
+            </Empty>
+          ) : isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full" />
               ))}
-          </TableBody>
-        </Table>
-      </div>
+            </div>
+          ) : dishes.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <UtensilsCrossed />
+                </EmptyMedia>
+                <EmptyTitle>Chưa có món ăn nào</EmptyTitle>
+                <EmptyDescription>Chưa có món ăn nào trong hệ thống. Bắt đầu bằng cách thêm món ăn đầu tiên.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={() => setOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />Thêm món ăn
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : filtered.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <FilterX />
+                </EmptyMedia>
+                <EmptyTitle>Không có món ăn phù hợp</EmptyTitle>
+                <EmptyDescription>Không có món ăn phù hợp với bộ lọc hiện tại.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button variant="outline" onClick={resetFilters}>Xoá bộ lọc</Button>
+              </EmptyContent>
+            </Empty>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border text-[15px] sm:text-base">
+              <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[10%] min-w-[100px]">Hình ảnh</TableHead>
+                    <TableHead className="w-[26%] min-w-[200px]">Tên món</TableHead>
+                    <TableHead className="w-[26%] min-w-[220px]">Tên quán</TableHead>
+                    <TableHead className="w-[12%] min-w-[120px]">Giá tiền</TableHead>
+                    <TableHead className="w-[10%]">Đánh giá</TableHead>
+                    <TableHead className="w-[12%]">Tình trạng</TableHead>
+                    <TableHead className="w-[8%] text-right">Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paged.map((d) => (
+                    <TableRow className="hover:bg-muted/40" key={d.id}>
+                      <TableCell>
+                        <img src={d.image} alt={d.name} className="h-12 w-16 object-cover rounded-md border" />
+                      </TableCell>
+                      <TableCell className="font-medium max-w-[260px]">
+                        <span className="text-sm sm:text-base font-semibold leading-tight truncate" title={d.name}>{d.name}</span>
+                      </TableCell>
+                      <TableCell className="max-w-[300px]">
+                        <span className="truncate" title={getRestaurantName(d)}>{getRestaurantName(d)}</span>
+                      </TableCell>
+                      <TableCell>
+                        {d.price.toLocaleString("vi-VN")}₫
+                      </TableCell>
+                      <TableCell>
+                        <div className="inline-flex items-center gap-1">
+                          <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                          <span className="tabular-nums font-medium">{d.rating.toFixed(1)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {d.isAvailable ? (
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang bán</span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Ngưng bán</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditing(d); setEditOpen(true) }}>Chỉnh sửa</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setConfirmDish(d)}>
+                              {d.isAvailable ? "Tạm ngưng bán" : "Mở bán lại"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Confirm toggle availability */}
       <AlertDialog open={!!confirmDish} onOpenChange={(o)=>{ if(!o) setConfirmDish(null) }}>
