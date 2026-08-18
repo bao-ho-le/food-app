@@ -84,13 +84,6 @@ export default function LoginPage() {
                 required
               />
             </div>
-
-            <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-              <p className="font-medium">Demo accounts:</p>
-              <p className="mt-1">User: user@example.com</p>
-              <p>Admin: admin@example.com</p>
-              <p className="mt-1">Password: password123</p>
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={loading}>

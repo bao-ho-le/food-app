@@ -7,8 +7,16 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 // import { authService } from "@/lib/auth";
 import useLogin from "@/hooks/authService/use-login";
+import { fetchUserProfile } from "@/services/users";
 
 import { useCart } from "@/hooks/use-cart";
 import {
@@ -19,6 +27,7 @@ import {
   LogOut,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function UserLayout({
@@ -32,19 +41,31 @@ export default function UserLayout({
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { logout } = useLogin();
-  const [email, setEmail] = useState("Người dùng");
+  const [displayName, setDisplayName] = useState("Người dùng");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const storedUser =
       localStorage.getItem("food_ordering_user") ?? localStorage.getItem("user");
-    if (!storedUser) return;
-    try {
-      const parsed = JSON.parse(storedUser);
-      setEmail(parsed?.email ?? "Người dùng");
-    } catch (error) {
-      console.error("Không thể đọc thông tin người dùng từ localStorage", error);
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setDisplayName(parsed?.name ?? parsed?.email ?? "Người dùng");
+      } catch (error) {
+        console.error("Không thể đọc thông tin người dùng từ localStorage", error);
+      }
     }
+
+    const token = localStorage.getItem("token") ?? undefined;
+    fetchUserProfile({ token })
+      .then((profile) => {
+        setDisplayName(profile.fullName || profile.email || "Người dùng");
+        setIsAdmin(profile.roleName === "ADMIN");
+      })
+      .catch((error) => {
+        console.error("Không thể tải thông tin người dùng", error);
+      });
   }, []);
 
   const handleLogout = async () => {
@@ -64,7 +85,6 @@ export default function UserLayout({
   const navItems = [
     { href: "/user/food", label: "Món ăn", icon: UtensilsCrossed },
     { href: "/user/orders", label: "Đơn hàng", icon: Package },
-    { href: "/user/profile", label: "Tài khoản", icon: User },
   ];
 
   return (
@@ -106,11 +126,38 @@ export default function UserLayout({
               </Link>
             </Button>
 
-            <div className="hidden items-center gap-2 md:flex">
-              <span className="text-sm text-muted-foreground">{email}</span>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut className="h-5 w-5" />
-              </Button>
+            <div className="hidden md:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="max-w-[160px] truncate text-sm font-medium">
+                      {displayName}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/user/profile">
+                      <User className="h-4 w-4" />
+                      Hồ sơ
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/dashboard">
+                        <ShieldCheck className="h-4 w-4" />
+                        Trang quản trị
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="h-4 w-4" />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <Button
@@ -151,9 +198,29 @@ export default function UserLayout({
                   </Link>
                 );
               })}
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                <span className="text-sm text-muted-foreground">{email}</span>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <div className="mt-4 flex flex-col gap-1 border-t border-border pt-4">
+                <span className="px-3 pb-1 text-sm font-medium truncate">
+                  {displayName}
+                </span>
+                <Link
+                  href="/user/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  <User className="h-4 w-4" />
+                  Hồ sơ
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Trang quản trị
+                  </Link>
+                )}
+                <Button variant="ghost" size="sm" className="justify-start" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Đăng xuất
                 </Button>
