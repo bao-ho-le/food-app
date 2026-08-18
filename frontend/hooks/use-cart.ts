@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import type { CartItem, Dish } from "@/types"
-import { mockDishes } from "@/lib/mock-data"
 
 // Định nghĩa lại cấu trúc Cart đơn giản
 export interface Cart {
@@ -18,14 +17,7 @@ export function useCart() {
     const savedCartJson = localStorage.getItem(CART_KEY)
     if (savedCartJson) {
       const savedCart = JSON.parse(savedCartJson) as Cart
-
-      // Vẫn giữ logic đồng bộ quan trọng này
-      const syncedItems = savedCart.items.map(item => {
-        const currentDishData = mockDishes.find(d => d.id === item.dish.id)
-        return currentDishData ? { ...item, dish: currentDishData } : item
-      }).filter(item => mockDishes.some(d => d.id === item.dish.id));
-
-      setCart({ items: syncedItems })
+      setCart(savedCart)
     }
   }, [])
 

@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCart } from "@/hooks/use-cart";
 import { authService } from "@/lib/auth";
-import { mockRestaurants } from "@/lib/mock-data";
 import type { Order } from "@/types";
 import { MapPin, CreditCard, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +29,7 @@ export default function CheckoutPage() {
     setUser(authService.getCurrentUser());
   }, []);
 
-  const restaurant = mockRestaurants.find((r) => r.id === cart.restaurantId);
+  const restaurantName = cart.items[0]?.dish.category;
   const deliveryFee = 15000;
   const totalAmount = getTotalAmount() + deliveryFee;
 
@@ -127,7 +126,7 @@ export default function CheckoutPage() {
           {/* Order Items */}
           <Card>
             <CardHeader>
-              <CardTitle>Món ăn từ {restaurant?.name}</CardTitle>
+              <CardTitle>Món ăn từ {restaurantName}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {cart.items.map((item) => (

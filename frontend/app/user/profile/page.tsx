@@ -36,7 +36,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useToast } from "@/hooks/use-toast"
 import { Calendar } from "@/components/ui/calendar"
-import { mockUsers } from "@/lib/mock-data"
 import { AddressDialog } from "@/components/address-dialog"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { cn } from "@/lib/utils"
@@ -50,22 +49,19 @@ import {
 import type { UserAddressResponse } from "@/services/addresses"
 import type { Address, User } from "@/types"
 
-const DEFAULT_USER: User =
-  (Array.isArray(mockUsers) && mockUsers.length > 0
-    ? mockUsers[0]
-    : {
-        id: "user_fallback",
-        email: "",
-        name: "",
-        phone: "",
-        gender: "other",
-        role: "user",
-        birthdate: "",
-        roleName: "USER",
-        createdAt: "",
-        isActive: true,
-        address: [],
-      })
+const DEFAULT_USER: User = {
+  id: "",
+  email: "",
+  name: "",
+  phone: "",
+  gender: "other",
+  role: "user",
+  birthdate: "",
+  roleName: "USER",
+  createdAt: "",
+  isActive: true,
+  address: [],
+}
 
 const mapApiAddressToClient = (
   apiAddress: UserAddressResponse,

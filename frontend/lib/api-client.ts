@@ -3,8 +3,19 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_SPRING_URL;
 async function handle<T>(res: Response): Promise<T> {
   const contentType = res.headers.get("content-type") || "";
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `HTTP ${res.status}`);
+    const raw = await res.text().catch(() => "");
+    let message = `Đã có lỗi xảy ra (mã ${res.status}). Vui lòng thử lại sau.`;
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed?.message === "string" && parsed.message.trim()) {
+          message = parsed.message;
+        }
+      } catch {
+        // body không phải JSON hợp lệ, giữ message mặc định ở trên
+      }
+    }
+    throw new Error(message);
   }
   if (contentType.includes("application/json")) {
     return (await res.json()) as T;

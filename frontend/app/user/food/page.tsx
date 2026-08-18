@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/select"
 import { useCart } from "@/hooks/use-cart"
 import {
-  mockDishes,
   mockRestaurants,
   cuisineOptions,
   ingredientOptions,
@@ -165,7 +164,7 @@ const PriceRangeFilter = ({ minPrice, maxPrice, onMinPriceChange, onMaxPriceChan
 }
 
 export default function FoodPage() {
-  const [dishes, setDishes] = useState<Dish[]>(mockDishes)
+  const [dishes, setDishes] = useState<Dish[]>([])
   const [dishMetaMap, setDishMetaMap] = useState<Record<string, typeof DEFAULT_DISH_META>>(dishMetadata)
   const [restaurantInfoMap, setRestaurantInfoMap] = useState<
     Record<string, { name: string; address?: string; phone?: string }>
