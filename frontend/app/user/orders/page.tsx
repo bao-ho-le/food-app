@@ -178,7 +178,7 @@ export default function OrdersPage() {
       toast({
         variant: "destructive",
         title: "Không thể gửi đánh giá",
-        description: "Vui lòng thử lại sau.",
+        description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
       })
       return
     } finally {

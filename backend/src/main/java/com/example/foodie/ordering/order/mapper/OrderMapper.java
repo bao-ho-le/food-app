@@ -4,7 +4,6 @@ import com.example.foodie.catalog.dish.entity.Dish;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
 import com.example.foodie.ordering.order.entity.Order;
 import com.example.foodie.ordering.order.entity.OrderDish;
-import com.example.foodie.ordering.order.enums.Status;
 import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.ordering.userdish.entity.UserDish;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ public class OrderMapper {
                 .user(user)
                 .deliveryAddress(deliveryAddress)
                 .totalPrice(0f)
-                .status(Status.DELIVERED)
                 .build();
     }
 

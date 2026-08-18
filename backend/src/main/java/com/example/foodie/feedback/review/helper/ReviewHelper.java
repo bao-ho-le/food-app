@@ -3,7 +3,9 @@ package com.example.foodie.feedback.review.helper;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.CatalogException;
 import com.example.foodie.common.exception.business_exception.FeedbackException;
+import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.ordering.order.entity.OrderDish;
+import com.example.foodie.ordering.order.enums.Status;
 import com.example.foodie.feedback.review.entity.Review;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +48,18 @@ public class ReviewHelper {
     public void validateNotReviewed(OrderDish orderDish) {
         if (orderDish.getReview() != null) {
             throw new FeedbackException(ErrorCode.REVIEW_ALREADY_EXISTS);
+        }
+    }
+
+    public void validateOrderOwner(OrderDish orderDish, User user) {
+        if (!orderDish.getOrder().getUser().getId().equals(user.getId())) {
+            throw new FeedbackException(ErrorCode.REVIEW_NOT_ORDER_OWNER);
+        }
+    }
+
+    public void validateOrderDelivered(OrderDish orderDish) {
+        if (orderDish.getOrder().getStatus() != Status.DELIVERED) {
+            throw new FeedbackException(ErrorCode.ORDER_NOT_DELIVERED);
         }
     }
 }

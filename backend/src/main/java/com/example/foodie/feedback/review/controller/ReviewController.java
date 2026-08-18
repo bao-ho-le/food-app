@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,10 +28,11 @@ public class ReviewController implements ReviewControllerDocs {
     @Override
     @PostMapping("/dish/{order_dish_id}")
     public ResponseEntity<Review> addReview(
+            Authentication authentication,
             @PathVariable(name="order_dish_id") Integer orderDishId,
             @Valid @RequestBody Review review){
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(reviewService.addReview(orderDishId, review));
+                .body(reviewService.addReview(authentication, orderDishId, review));
     }
 }

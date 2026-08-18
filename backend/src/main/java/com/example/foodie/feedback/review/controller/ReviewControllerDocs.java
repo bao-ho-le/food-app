@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -36,9 +37,12 @@ public interface ReviewControllerDocs {
     @Operation(summary = "Thêm đánh giá", description = "Thêm đánh giá cho một món ăn đã đặt (theo order_dish_id).")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Thêm đánh giá thành công"),
-            @ApiResponse(responseCode = "400", description = "Món ăn đã đặt không tồn tại hoặc dữ liệu không hợp lệ")
+            @ApiResponse(responseCode = "400", description = "Món ăn đã đặt không tồn tại hoặc dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "403", description = "Đơn hàng không thuộc về người dùng hiện tại"),
+            @ApiResponse(responseCode = "409", description = "Đơn hàng chưa được giao hoặc đã được đánh giá")
     })
     ResponseEntity<Review> addReview(
+            Authentication authentication,
             @Parameter(description = "ID của món ăn trong đơn hàng") @PathVariable(name="order_dish_id") Integer orderDishId,
             @Valid @RequestBody Review review);
 }

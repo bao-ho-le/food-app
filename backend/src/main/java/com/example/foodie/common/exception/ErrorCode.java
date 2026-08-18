@@ -106,6 +106,8 @@ public enum ErrorCode {
     REVIEW_RATING_REQUIRED(HttpStatus.BAD_REQUEST, "Điểm đánh giá không được để trống"),
     REVIEW_RATING_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "Điểm đánh giá phải từ 1 đến 5"),
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "Bạn đã review món này rồi"),
+    REVIEW_NOT_ORDER_OWNER(HttpStatus.FORBIDDEN, "Bạn không có quyền đánh giá đơn hàng này"),
+    ORDER_NOT_DELIVERED(HttpStatus.CONFLICT, "Chỉ có thể đánh giá món ăn trong đơn hàng đã giao"),
 
     // ===================== Common =====================
     SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");

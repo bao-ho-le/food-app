@@ -1,10 +1,29 @@
+"use client"
+
 import type React from "react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { UtensilsCrossed, ShoppingBag, Star, Clock } from "lucide-react"
 
 export default function HomePage() {
+  const router = useRouter()
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      router.replace("/user/food")
+    } else {
+      setCheckingAuth(false)
+    }
+  }, [router])
+
+  if (checkingAuth) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

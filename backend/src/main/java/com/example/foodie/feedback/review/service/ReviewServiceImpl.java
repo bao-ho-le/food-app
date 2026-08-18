@@ -4,6 +4,8 @@ import com.example.foodie.catalog.dish.repository.DishRepository;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.CatalogException;
 import com.example.foodie.common.exception.business_exception.OrderingException;
+import com.example.foodie.identity.user.entity.User;
+import com.example.foodie.identity.user.helper.UserHelper;
 import com.example.foodie.ordering.order.entity.OrderDish;
 import com.example.foodie.ordering.order.repository.OrderDishRepository;
 import com.example.foodie.feedback.review.dto.response.ReviewResponseDTO;
@@ -12,6 +14,7 @@ import com.example.foodie.feedback.review.helper.ReviewHelper;
 import com.example.foodie.feedback.review.mapper.ReviewMapper;
 import com.example.foodie.feedback.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +27,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final OrderDishRepository orderDishRepository;
     private final ReviewHelper reviewHelper;
     private final ReviewMapper reviewMapper;
+    private final UserHelper userHelper;
 
     @Override
     public List<ReviewResponseDTO> findAllReviewsByDishId(Integer dishId){
@@ -39,13 +43,17 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Review addReview(Integer orderDishId, Review review){
+    public Review addReview(Authentication authentication, Integer orderDishId, Review review){
         reviewHelper.validateOrderDishId(orderDishId);
         reviewHelper.validateReviewRequest(review);
+
+        User user = userHelper.getUserFromAuthentication(authentication);
 
         OrderDish orderDish = orderDishRepository.findById(orderDishId)
                 .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_DISH_NOT_FOUND));
 
+        reviewHelper.validateOrderOwner(orderDish, user);
+        reviewHelper.validateOrderDelivered(orderDish);
         reviewHelper.validateNotReviewed(orderDish);
 
         Review newReview = reviewMapper.toEntity(review);

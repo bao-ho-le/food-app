@@ -540,7 +540,7 @@ export default function FoodPage() {
                     }
                   }}
                   className={`flex h-full flex-col gap-0 overflow-hidden border-2 py-0 transition-all duration-200 focus:outline-none ${isSelected
-                    ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background shadow-xl"
+                    ? "border-primary shadow-xl"
                     : "border-border/50 hover:border-primary/70 hover:shadow-lg hover:-translate-y-1"
                     }`}
                 >
