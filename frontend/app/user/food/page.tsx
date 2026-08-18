@@ -376,7 +376,9 @@ export default function FoodPage() {
         setFilterOptions(merged)
       } catch (error) {
         if (!isMounted) return
-        setFiltersError("Không thể tải bộ lọc. Vui lòng thử lại sau.")
+        setFiltersError(
+          error instanceof Error ? error.message : "Không thể tải bộ lọc. Vui lòng thử lại sau.",
+        )
       } finally {
         if (isMounted) setFiltersLoading(false)
       }
