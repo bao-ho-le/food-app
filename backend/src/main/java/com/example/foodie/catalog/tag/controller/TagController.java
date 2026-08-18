@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("${api.prefix}/tags")
 @AllArgsConstructor
 public class TagController {
-    private TagService tagService;
+    private final TagService tagService;
 
     @GetMapping
     public ResponseEntity<List<Tag>> getAllTags(){

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${api.prefix}/dish-tag")
 @AllArgsConstructor
 public class DishTagController {
-    private DishTagService dishTagService;
+    private final DishTagService dishTagService;
 
     @PostMapping("/{dish_id}")
     public ResponseEntity<DishTag> addTagForDish(@PathVariable int dish_id, @RequestParam int tagId){

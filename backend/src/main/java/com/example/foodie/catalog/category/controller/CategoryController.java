@@ -14,7 +14,7 @@ import java.util.List;
 @RequestMapping("${api.prefix}/categories")
 @AllArgsConstructor
 public class CategoryController {
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
 
     @GetMapping
     public ResponseEntity<List<Category>> getAllCategories(){

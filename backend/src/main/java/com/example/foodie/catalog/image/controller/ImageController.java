@@ -16,7 +16,7 @@ import java.util.Map;
 @RequestMapping("${api.prefix}/images")
 @AllArgsConstructor
 public class ImageController {
-    private ImageService imageService;
+    private final ImageService imageService;
 
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<Map<String, Object>> uploadImage(

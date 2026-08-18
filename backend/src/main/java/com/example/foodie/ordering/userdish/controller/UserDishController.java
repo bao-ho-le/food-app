@@ -4,12 +4,6 @@ import com.example.foodie.ordering.userdish.dto.request.UpdateDishQuantityDTO;
 import com.example.foodie.ordering.userdish.dto.request.UserDishDTO;
 import com.example.foodie.ordering.userdish.entity.UserDish;
 import com.example.foodie.ordering.userdish.service.UserDishService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
@@ -20,31 +14,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCHEME;
-
 @RestController
 @RequestMapping("${api.prefix}/user-dishes")
 @AllArgsConstructor
-@Tag(name = "Cart", description = "Giỏ hàng của người dùng (user-dishes)")
-@SecurityRequirement(name = BEARER_SECURITY_SCHEME)
-public class UserDishController {
-    private UserDishService userDishService;
+public class UserDishController implements UserDishControllerDocs {
+    private final UserDishService userDishService;
 
-    @Operation(summary = "Lấy giỏ hàng", description = "Trả về toàn bộ món ăn trong giỏ hàng của người dùng đang đăng nhập.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lấy giỏ hàng thành công"),
-            @ApiResponse(responseCode = "404", description = "Không thể lấy giỏ hàng")
-    })
+    @Override
     @GetMapping
     public ResponseEntity<List<UserDish>> getAllUserDishes(Authentication authentication){
         return ResponseEntity.ok(userDishService.getAllUserDishesByUserId(authentication));
     }
 
-    @Operation(summary = "Thêm món vào giỏ hàng", description = "Thêm một món ăn với số lượng chỉ định vào giỏ hàng.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Thêm vào giỏ hàng thành công"),
-            @ApiResponse(responseCode = "400", description = "Món ăn không tồn tại hoặc dữ liệu không hợp lệ")
-    })
+    @Override
     @PostMapping
     public ResponseEntity<Void> addUserDish(Authentication authentication, @Valid @RequestBody UserDishDTO userDishDTO){
         userDishService.addUserDish(authentication, userDishDTO);
@@ -52,23 +34,16 @@ public class UserDishController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @Operation(summary = "Xoá món khỏi giỏ hàng", description = "Xoá một mục khỏi giỏ hàng theo ID.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Xoá thành công")
-    })
+    @Override
     @DeleteMapping("/{user_dish_id}")
     public ResponseEntity<Void> deleteById(
-            @Parameter(description = "ID của mục trong giỏ hàng") @PathVariable(name="user_dish_id") Integer userDishId){
+            @PathVariable(name="user_dish_id") Integer userDishId){
         userDishService.deleteUserDishById(userDishId);
 
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Cập nhật số lượng", description = "Cập nhật số lượng của một món trong giỏ hàng.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Cập nhật thành công"),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
-    })
+    @Override
     @PutMapping
     public ResponseEntity<Void> updateQuantity(@Valid @RequestBody UpdateDishQuantityDTO dto){
         userDishService.updateQuantity(dto.getUserDishId(), dto.getQuantity());
