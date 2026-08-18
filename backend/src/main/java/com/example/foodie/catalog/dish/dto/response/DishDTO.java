@@ -1,6 +1,6 @@
 package com.example.foodie.catalog.dish.dto.response;
 
-import com.example.foodie.catalog.tag.entity.Tag;
+import com.example.foodie.catalog.tag.dto.response.TagResponseDTO;
 import com.example.foodie.catalog.restaurant.entity.Restaurant;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +29,7 @@ public class DishDTO {
 
     private float rating; // điểm đánh giá món ăn
 
-    private List<Tag> tags; // danh sách tag của món
+    private List<TagResponseDTO> tags; // danh sách tag của món
 
     private String url;
 }

@@ -4,7 +4,7 @@ import com.example.foodie.catalog.dish.dto.request.DishRequestDTO;
 import com.example.foodie.catalog.dish.dto.response.DishDTO;
 import com.example.foodie.catalog.dish.entity.Dish;
 import com.example.foodie.catalog.restaurant.entity.Restaurant;
-import com.example.foodie.catalog.tag.entity.Tag;
+import com.example.foodie.catalog.tag.dto.response.TagResponseDTO;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +22,7 @@ public class DishMapper {
                 .build();
     }
 
-    public DishDTO toDto(Dish dish, float rating, List<Tag> tags, String imageUrl) {
+    public DishDTO toDto(Dish dish, float rating, List<TagResponseDTO> tags, String imageUrl) {
         return DishDTO.builder()
                 .id(dish.getId())
                 .name(dish.getName())

@@ -14,15 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCart } from "@/hooks/use-cart"
-import {
-  mockRestaurants,
-  cuisineOptions,
-  ingredientOptions,
-  methodOptions,
-  flavorOptions,
-  dishMetadata,
-  type DishFilterOption,
-} from "@/lib/mock-data"
+import { mockRestaurants } from "@/lib/mock-data"
 import { fetchAllTags } from "@/services/tags"
 import { fetchDishesRaw, type DishApiResponse } from "@/services/dishes"
 import { fetchDishReviews, type DishReviewResponse } from "@/services/reviews"
@@ -37,60 +29,25 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import type { Dish } from "@/types"
+import type { Dish, Tag } from "@/types"
 import { SearchBar } from "@/components/search-bar"
 import {
   FilterPopover,
-  type FilterKey,
+  DEFAULT_DISH_FILTER_VALUES,
+  PRICE_RANGE_OPTIONS,
   type DishFilterValues,
 } from "@/components/dish-filters"
 
-const DEFAULT_DISH_META = {
-  cuisine: "Món Việt",
-  mainIngredients: [] as string[],
-  cookMethods: [] as string[],
-  flavorProfiles: [] as string[],
-}
-
-const FILTER_CATEGORY_LABELS: Record<FilterKey, string> = {
-  cuisine: "Ẩm thực",
-  ingredient: "Nguyên liệu chính",
-  method: "Phương pháp chế biến",
-  flavor: "Hương vị",
-}
-
-const DEFAULT_FILTER_OPTIONS: Record<FilterKey, DishFilterOption[]> = {
-  cuisine: cuisineOptions,
-  ingredient: ingredientOptions,
-  method: methodOptions,
-  flavor: flavorOptions,
-}
-
-const CATEGORY_KEY_BY_NAME: Record<string, FilterKey> = Object.entries(
-  FILTER_CATEGORY_LABELS,
-).reduce(
-  (acc, [key, label]) => {
-    acc[label.toLowerCase()] = key as FilterKey
-    return acc
-  },
-  {} as Record<string, FilterKey>,
-)
-
 export default function FoodPage() {
   const [dishes, setDishes] = useState<Dish[]>([])
-  const [dishMetaMap, setDishMetaMap] = useState<Record<string, typeof DEFAULT_DISH_META>>(dishMetadata)
   const [restaurantInfoMap, setRestaurantInfoMap] = useState<
     Record<string, { name: string; address?: string; phone?: string }>
   >({})
   const [dishesLoading, setDishesLoading] = useState(false)
   const [dishesError, setDishesError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCuisine, setSelectedCuisine] = useState("all")
-  const [selectedIngredient, setSelectedIngredient] = useState("all")
-  const [selectedMethod, setSelectedMethod] = useState("all")
-  const [selectedFlavor, setSelectedFlavor] = useState("all")
-  const [minPrice, setMinPrice] = useState("")
-  const [maxPrice, setMaxPrice] = useState("")
+  const [committedFilters, setCommittedFilters] = useState<DishFilterValues>(DEFAULT_DISH_FILTER_VALUES)
+  const [tagNameById, setTagNameById] = useState<Map<string, string>>(new Map())
   const [selectedDishId, setSelectedDishId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const { addToCart } = useCart()
@@ -106,9 +63,6 @@ export default function FoodPage() {
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<number>(0)
   const REVIEWS_PER_PAGE = 3
   const [visibleReviewCount, setVisibleReviewCount] = useState(REVIEWS_PER_PAGE)
-  const [filterOptions, setFilterOptions] = useState(DEFAULT_FILTER_OPTIONS)
-  const [filtersLoading, setFiltersLoading] = useState(false)
-  const [filtersError, setFiltersError] = useState<string | null>(null)
   const [reviewsByDish, setReviewsByDish] = useState<Record<string, DishReviewResponse[]>>({})
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
@@ -201,33 +155,10 @@ export default function FoodPage() {
           }
         })
 
-        const meta: Record<string, typeof DEFAULT_DISH_META> = {}
         const restaurantMap: Record<string, { name: string; address?: string; phone?: string }> = {}
 
         data.forEach((dish) => {
           const dishId = String(dish.id)
-          const baseMeta = {
-            cuisine: DEFAULT_DISH_META.cuisine,
-            mainIngredients: [] as string[],
-            cookMethods: [] as string[],
-            flavorProfiles: [] as string[],
-          }
-            ; (dish.tags ?? []).forEach((tag) => {
-              const normalizedCategory = tag.category?.name?.trim().toLowerCase() ?? ""
-              const key = CATEGORY_KEY_BY_NAME[normalizedCategory]
-              if (!key) return
-              const value = tag.name.trim()
-              if (key === "cuisine") {
-                baseMeta.cuisine = value
-              } else if (key === "ingredient") {
-                if (!baseMeta.mainIngredients.includes(value)) baseMeta.mainIngredients.push(value)
-              } else if (key === "method") {
-                if (!baseMeta.cookMethods.includes(value)) baseMeta.cookMethods.push(value)
-              } else if (key === "flavor") {
-                if (!baseMeta.flavorProfiles.includes(value)) baseMeta.flavorProfiles.push(value)
-              }
-            })
-          meta[dishId] = baseMeta
           if (dish.restaurant?.name) {
             restaurantMap[dishId] = {
               name: dish.restaurant.name,
@@ -238,7 +169,6 @@ export default function FoodPage() {
         })
 
         setDishes(mappedDishes)
-        setDishMetaMap(meta)
         setRestaurantInfoMap(restaurantMap)
       } catch (error) {
         if (!isMounted) return
@@ -252,98 +182,47 @@ export default function FoodPage() {
       isMounted = false
     }
   }, [])
-  useEffect(() => {
-    let isMounted = true
-    const loadFilters = async () => {
-      setFiltersLoading(true)
-      setFiltersError(null)
-      try {
-        const tags = await fetchAllTags()
-        if (!isMounted) return
-        const grouped = {
-          cuisine: [] as DishFilterOption[],
-          ingredient: [] as DishFilterOption[],
-          method: [] as DishFilterOption[],
-          flavor: [] as DishFilterOption[],
-        }
-        tags.forEach((tag) => {
-          const categoryName = tag.category?.name?.trim().toLowerCase()
-          const matchEntry = (Object.entries(FILTER_CATEGORY_LABELS) as [FilterKey, string][])
-            .find(([, label]) => label.toLowerCase() === categoryName)
-          if (!matchEntry) return
-          const [key] = matchEntry
-          grouped[key].push({
-            label: tag.name.trim(),
-            value: tag.name.trim(),
-          })
-        })
 
-        const merged = {} as Record<FilterKey, DishFilterOption[]>
-          ; (Object.keys(DEFAULT_FILTER_OPTIONS) as FilterKey[]).forEach((key) => {
-            const uniqueMap = new Map<string, DishFilterOption>()
-            grouped[key].forEach((option) => {
-              if (!uniqueMap.has(option.value)) {
-                uniqueMap.set(option.value, option)
-              }
-            })
-            merged[key] = [
-              DEFAULT_FILTER_OPTIONS[key][0],
-              ...Array.from(uniqueMap.values()),
-            ]
-          })
-        setFilterOptions(merged)
-      } catch (error) {
-        if (!isMounted) return
-        setFiltersError(
-          error instanceof Error ? error.message : "Không thể tải bộ lọc. Vui lòng thử lại sau.",
-        )
-      } finally {
-        if (isMounted) setFiltersLoading(false)
-      }
-    }
-    loadFilters()
-    return () => {
-      isMounted = false
-    }
+  const handleTagsLoaded = useCallback((tags: Tag[]) => {
+    setTagNameById(new Map(tags.map((tag) => [tag.id, tag.name])))
   }, [])
 
   const filteredDishes = useMemo(() => {
-    return dishes.filter((dish) => {
-      const meta = dishMetaMap[dish.id] ?? dishMetadata[dish.id] ?? DEFAULT_DISH_META
-      const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCuisine = selectedCuisine === "all" || meta.cuisine === selectedCuisine
-      const matchesIngredient =
-        selectedIngredient === "all" || meta.mainIngredients.includes(selectedIngredient)
-      const matchesMethod = selectedMethod === "all" || meta.cookMethods.includes(selectedMethod)
-      const matchesFlavor = selectedFlavor === "all" || meta.flavorProfiles.includes(selectedFlavor)
+    const { priceRange, ratingMin, tagIds, sortOrder } = committedFilters
 
-      const min = minPrice ? parseFloat(minPrice) : null
-      const max = maxPrice ? parseFloat(maxPrice) : null
+    const filtered = dishes.filter((dish) => {
+      const matchesSearch = dish.name.toLowerCase().includes(searchQuery.toLowerCase())
 
       let matchesPrice = true
-      if (min !== null && max !== null) {
-        matchesPrice = dish.price >= min && dish.price <= max
-      } else if (min !== null) {
-        matchesPrice = dish.price >= min
-      } else if (max !== null) {
-        matchesPrice = dish.price <= max
+      if (priceRange) {
+        const range = PRICE_RANGE_OPTIONS.find((option) => option.value === priceRange)
+        if (range) {
+          matchesPrice = dish.price >= range.min && (range.max === undefined || dish.price <= range.max)
+        }
       }
 
-      return (
-        matchesSearch &&
-        matchesCuisine &&
-        matchesIngredient &&
-        matchesMethod &&
-        matchesFlavor &&
-        matchesPrice &&
-        dish.isAvailable
-      )
+      const matchesRating = ratingMin === "" || dish.rating >= Number(ratingMin)
+
+      const matchesTags = tagIds.every((tagId) => {
+        const tagName = tagNameById.get(tagId)
+        return tagName !== undefined && dish.tags.includes(tagName)
+      })
+
+      return matchesSearch && matchesPrice && matchesRating && matchesTags && dish.isAvailable
     })
-  }, [dishes, dishMetaMap, searchQuery, selectedCuisine, selectedIngredient, selectedMethod, selectedFlavor, minPrice, maxPrice])
+
+    if (sortOrder === "asc") {
+      return [...filtered].sort((a, b) => a.price - b.price)
+    }
+    if (sortOrder === "desc") {
+      return [...filtered].sort((a, b) => b.price - a.price)
+    }
+    return filtered
+  }, [dishes, searchQuery, committedFilters, tagNameById])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, selectedCuisine, selectedIngredient, selectedMethod, selectedFlavor, minPrice, maxPrice])
+  }, [searchQuery, committedFilters])
 
   useEffect(() => {
     if (!filteredDishes.length) {
@@ -455,25 +334,8 @@ export default function FoodPage() {
     })
   }
 
-  const committedFilters: DishFilterValues = useMemo(
-    () => ({
-      cuisine: selectedCuisine,
-      ingredient: selectedIngredient,
-      method: selectedMethod,
-      flavor: selectedFlavor,
-      minPrice,
-      maxPrice,
-    }),
-    [selectedCuisine, selectedIngredient, selectedMethod, selectedFlavor, minPrice, maxPrice],
-  )
-
   const handleApplyFilters = (values: DishFilterValues) => {
-    setSelectedCuisine(values.cuisine)
-    setSelectedIngredient(values.ingredient)
-    setSelectedMethod(values.method)
-    setSelectedFlavor(values.flavor)
-    setMinPrice(values.minPrice)
-    setMaxPrice(values.maxPrice)
+    setCommittedFilters(values)
   }
 
   const getRestaurant = (dish: Dish) => {
@@ -497,18 +359,12 @@ export default function FoodPage() {
             />
             <FilterPopover
               filters={committedFilters}
-              filterOptions={filterOptions}
               onApply={handleApplyFilters}
+              onTagsLoaded={handleTagsLoaded}
             />
           </div>,
           navSlot,
         )}
-      {(filtersLoading || filtersError) && (
-        <div className="mb-4 text-center text-sm">
-          {filtersLoading && <span className="text-muted-foreground">Đang tải bộ lọc...</span>}
-          {filtersError && <span className="text-destructive">{filtersError}</span>}
-        </div>
-      )}
       {dishesError && (
         <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {dishesError}

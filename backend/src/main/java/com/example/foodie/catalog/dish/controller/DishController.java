@@ -1,7 +1,7 @@
 package com.example.foodie.catalog.dish.controller;
 
 import com.example.foodie.catalog.dish.dto.response.DishDTO;
-import com.example.foodie.catalog.tag.entity.Tag;
+import com.example.foodie.catalog.tag.dto.response.TagResponseDTO;
 import com.example.foodie.catalog.dish.service.DishService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ public class DishController implements DishControllerDocs {
 
     @Override
     @GetMapping("/{dishId}/tags")
-    public ResponseEntity<List<Tag>> getTagsByDishId(@PathVariable Integer dishId){
+    public ResponseEntity<List<TagResponseDTO>> getTagsByDishId(@PathVariable Integer dishId){
         return ResponseEntity.ok(dishService.getAllTags(dishId));
     }
 

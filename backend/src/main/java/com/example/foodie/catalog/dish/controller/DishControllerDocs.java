@@ -1,7 +1,7 @@
 package com.example.foodie.catalog.dish.controller;
 
 import com.example.foodie.catalog.dish.dto.response.DishDTO;
-import com.example.foodie.catalog.tag.entity.Tag;
+import com.example.foodie.catalog.tag.dto.response.TagResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,7 +28,7 @@ public interface DishControllerDocs {
     @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     ResponseEntity<List<DishDTO>> getAllDishes();
 
-    ResponseEntity<List<Tag>> getTagsByDishId(@PathVariable Integer dishId);
+    ResponseEntity<List<TagResponseDTO>> getTagsByDishId(@PathVariable Integer dishId);
 
     ResponseEntity<List<Float>> average_rating();
 

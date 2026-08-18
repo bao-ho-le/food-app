@@ -13,7 +13,8 @@ import com.example.foodie.feedback.review.repository.ReviewRepository;
 import com.example.foodie.catalog.restaurant.entity.Restaurant;
 import com.example.foodie.catalog.restaurant.repository.RestaurantRepository;
 import com.example.foodie.catalog.dishtag.service.DishTagService;
-import com.example.foodie.catalog.tag.entity.Tag;
+import com.example.foodie.catalog.tag.dto.response.TagResponseDTO;
+import com.example.foodie.catalog.tag.mapper.TagMapper;
 import com.example.foodie.catalog.tag.repository.TagRepository;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.CatalogException;
@@ -37,6 +38,7 @@ public class DishServiceImpl implements DishService {
     private final DishTagService dishTagService;
     private final DishHelper dishHelper;
     private final DishMapper dishMapper;
+    private final TagMapper tagMapper;
 
     @Override
     public List<DishDTO> getAllDishes() {
@@ -52,10 +54,12 @@ public class DishServiceImpl implements DishService {
     }
 
     @Override
-    public List<Tag> getAllTags(Integer dishId){
+    public List<TagResponseDTO> getAllTags(Integer dishId){
         dishHelper.validateDishId(dishId);
 
-        return tagRepository.findTagsByDishId(dishId);
+        return tagRepository.findTagsByDishId(dishId).stream()
+                .map(tagMapper::toDto)
+                .toList();
     }
 
     @Override
