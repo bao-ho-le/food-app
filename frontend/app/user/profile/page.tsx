@@ -412,7 +412,7 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto max-w-5xl px-4 py-8">
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid h-auto w-full grid-cols-2 p-1">
           <TabsTrigger value="profile" className="py-2.5 text-sm md:text-base">
             <User className="mr-2 h-4 w-4" />
             Thông tin tài khoản
