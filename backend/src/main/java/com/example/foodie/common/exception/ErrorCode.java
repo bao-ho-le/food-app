@@ -36,7 +36,6 @@ public enum ErrorCode {
     ADDRESS_LINE_REQUIRED(HttpStatus.BAD_REQUEST, "Địa chỉ không được để trống"),
     ADDRESS_LINE_TOO_LONG(HttpStatus.BAD_REQUEST, "Địa chỉ không được dài quá 255 ký tự"),
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "Địa chỉ không tồn tại"),
-    USER_HAS_NO_ADDRESS(HttpStatus.NOT_FOUND, "User không có địa chỉ nào"),
     ADDRESS_ALREADY_EXISTS(HttpStatus.CONFLICT, "User đã có địa chỉ này rồi"),
 
     // ===================== Catalog.Restaurant =====================

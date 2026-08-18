@@ -114,7 +114,7 @@ export default function UserLayout({
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative" asChild>
               <Link href="/user/cart">
                 <ShoppingCart className="h-5 w-5" />

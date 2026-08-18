@@ -33,12 +33,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public List<Address> getAll(){
-        List<Address> allAddresses = addressRepository.findAll();
-
-        if (allAddresses.isEmpty()){
-            throw new IdentityException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
-        return allAddresses;
+        return addressRepository.findAll();
     }
 
     @Override
@@ -72,11 +67,7 @@ public class AddressServiceImpl implements AddressService {
     public List<Address> getAllAddressesByUser(Authentication authentication){
         User user = userHelper.getUserFromAuthentication(authentication);
 
-        List<Address> allAddresses = addressRepository.findAllByUser_Id(user.getId());
-        if (allAddresses.isEmpty()){
-            throw new IdentityException(ErrorCode.USER_HAS_NO_ADDRESS);
-        }
-        return allAddresses;
+        return addressRepository.findAllByUser_Id(user.getId());
     }
 
     @Override

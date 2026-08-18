@@ -423,8 +423,13 @@ export default function ProfilePage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="mt-8">
-          <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
+        <div className="mt-8 grid">
+        <TabsContent
+          value="profile"
+          forceMount
+          className="[grid-area:1/1] data-[state=inactive]:invisible data-[state=inactive]:pointer-events-none"
+        >
+          <div className="h-full rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Thông tin cá nhân</h2>
@@ -539,8 +544,12 @@ export default function ProfilePage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="addresses" className="mt-8">
-          <div className="rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
+        <TabsContent
+          value="addresses"
+          forceMount
+          className="[grid-area:1/1] data-[state=inactive]:invisible data-[state=inactive]:pointer-events-none"
+        >
+          <div className="h-full rounded-lg border bg-card p-8 text-card-foreground shadow-sm">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Sổ địa chỉ</h2>
@@ -565,6 +574,11 @@ export default function ProfilePage() {
             {isAddressesLoading && (
               <div className="mb-4 rounded-md border border-dashed border-muted px-4 py-3 text-sm text-muted-foreground">
                 Đang tải sổ địa chỉ...
+              </div>
+            )}
+            {!isAddressesLoading && !addressesError && user.address.length === 0 && (
+              <div className="rounded-lg border border-dashed px-4 py-10 text-center text-sm text-muted-foreground">
+                Bạn chưa có địa chỉ nào. Thêm địa chỉ đầu tiên để đặt hàng nhanh hơn.
               </div>
             )}
             <div className="space-y-4">
@@ -612,6 +626,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </TabsContent>
+        </div>
       </Tabs>
 
       <AddressDialog
