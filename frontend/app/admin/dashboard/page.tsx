@@ -151,9 +151,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex-1 space-y-10 bg-background p-4 md:px-18 md:py-10">
-      <h1 className="text-4xl font-bold">Dashboard</h1>
-
+    <div className="flex-1 space-y-10 bg-background p-4 md:px-18 pt-4 md:pt-6 md:pb-10">
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Tổng doanh thu" value={formatCurrency(totalRevenue)} icon={<DollarSign className="h-6 w-6 text-white" />} iconBgColor="bg-indigo-500" />
         <StatCard title="Tổng đơn hàng" value={orders.length.toLocaleString("vi-VN")} icon={<Package className="h-6 w-6 text-white" />} iconBgColor="bg-blue-500" />

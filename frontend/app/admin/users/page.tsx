@@ -139,13 +139,8 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-8 px-18 pt-10 bg-background flex-1">
-      <div className="text-center">
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight pb-3">Quản lý người dùng</h1>
-        <div className="mx-auto mt-2 h-1 w-24 rounded bg-foreground/80" />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 pt-7">
+    <div className="space-y-8 px-18 pt-6 bg-background flex-1">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <button onClick={() => { setQuickFilter('all'); setPage(1) }}
           className={`rounded-xl  p-4 text-center transition-all hover:shadow-sm hover:-translate-y-[1px] ${quickFilter==='all' ? 'ring-3 ring-violet-400 bg-violet-100 text-violet-700' : 'border-violet-200 bg-violet-200/60 hover:bg-violet-100 text-violet-700'}`}>
           <div className="text-sm font-medium p-1">Tổng người dùng</div>

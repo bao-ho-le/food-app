@@ -140,12 +140,7 @@ export default function RestaurantsPage() {
   }
 
   return (
-    <div className="space-y-8 px-20 py-10 bg-background flex-1">
-      <div className="text-center">
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight pb-3">Quản lý quán ăn</h1>
-        <div className="mx-auto mt-2 h-1 w-24 rounded bg-foreground/80" />
-      </div>
-
+    <div className="space-y-8 px-20 pt-6 pb-10 bg-background flex-1">
       <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">

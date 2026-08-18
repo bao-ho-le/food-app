@@ -259,12 +259,7 @@ export default function FoodsPage() {
   }
 
   return (
-    <div className="space-y-8 px-18 py-10 bg-background flex-1">
-      <div className="text-center">
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight pb-3">Quản lý món ăn</h1>
-        <div className="mx-auto mt-2 h-1 w-24 rounded bg-foreground/80" />
-      </div>
-
+    <div className="space-y-8 px-18 pt-6 pb-10 bg-background flex-1">
       <div className="flex items-center justify-between gap-3 text-[15px] sm:text-base">
         <div className="relative flex-1 sm:max-w-[22rem]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
