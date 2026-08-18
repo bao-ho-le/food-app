@@ -31,6 +31,7 @@ import {
   Home,
 } from "lucide-react";
 import { User } from "@/types";
+import { fetchUserProfile } from "@/services/users";
 
 const createAdminUserFromStorage = (data: any): User => {
   return {
@@ -62,28 +63,44 @@ export default function AdminLayout({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const token = localStorage.getItem("token");
     const storedUserString =
       localStorage.getItem("food_ordering_user") ?? localStorage.getItem("user");
-    const storedRole = localStorage.getItem("roleName");
 
-    if (!storedUserString) {
+    if (!token) {
       router.replace("/login");
       return;
     }
 
-    try {
-      const parsed = JSON.parse(storedUserString) as User | { role?: string };
-      const roleFromUser =
-        (parsed as any)?.roleName ?? (parsed as any)?.role ?? storedRole ?? "";
-      if (String(roleFromUser).toUpperCase() !== "ADMIN") {
-        router.replace("/login");
-        return;
+    // Hiển thị tạm dữ liệu từ localStorage trong lúc chờ xác thực thật với backend
+    if (storedUserString) {
+      try {
+        setUser(createAdminUserFromStorage(JSON.parse(storedUserString)));
+      } catch {
+        // bỏ qua, chờ kết quả từ /users/profiles
       }
-      setUser(createAdminUserFromStorage(parsed));
-    } catch (error) {
-      console.error("Failed to parse stored admin user", error);
-      router.replace("/login");
     }
+
+    fetchUserProfile({ token })
+      .then((profile) => {
+        if (profile.roleName !== "ADMIN") {
+          router.replace("/login");
+          return;
+        }
+        setUser(
+          createAdminUserFromStorage({
+            name: profile.fullName,
+            email: profile.email,
+            phone: profile.phoneNumber,
+            gender: profile.gender?.toLowerCase(),
+            birthdate: profile.birthday ?? "",
+          }),
+        );
+      })
+      .catch((error) => {
+        console.error("Failed to verify admin role", error);
+        router.replace("/login");
+      });
   }, [router]);
 
   const handleLogout = () => {
@@ -100,6 +117,7 @@ export default function AdminLayout({
     { href: "/admin/dashboard", label: "Trang chủ", icon: LayoutDashboard },
     { href: "/admin/users", label: "Người dùng", icon: Users },
     { href: "/admin/foods", label: "Món ăn", icon: UtensilsCrossed },
+    { href: "/admin/orders", label: "Đơn hàng", icon: Package },
     { href: "/admin/restaurants", label: "Quán ăn", icon: Home },
   ];
 

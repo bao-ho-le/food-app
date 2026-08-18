@@ -9,10 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -29,10 +26,4 @@ public interface RestaurantControllerDocs {
             @ApiResponse(responseCode = "404", description = "Không thể lấy danh sách nhà hàng")
     })
     ResponseEntity<List<Restaurant>> getAllRestaurants();
-
-    ResponseEntity<Restaurant> createRestaurant(@Valid @RequestBody Restaurant restaurant);
-
-    ResponseEntity<Restaurant> updateRestaurant(@PathVariable Integer id, @RequestBody Restaurant restaurant);
-
-    ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type);
 }

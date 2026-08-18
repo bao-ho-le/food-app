@@ -9,6 +9,7 @@ import com.example.foodie.catalog.image.repository.ImageRepository;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
 import com.example.foodie.ordering.order.entity.Order;
 import com.example.foodie.ordering.order.entity.OrderDish;
+import com.example.foodie.ordering.order.enums.Status;
 import com.example.foodie.ordering.order.helper.OrderHelper;
 import com.example.foodie.ordering.order.mapper.OrderMapper;
 import com.example.foodie.ordering.order.repository.OrderDishRepository;
@@ -132,6 +133,16 @@ public class OrderServiceImpl implements OrderService {
                         orderDish,
                         resolveImageUrl(orderDish.getDish().getId())))
                 .toList();
+    }
+
+    @Override
+    public Order updateStatus(Integer orderId, Status newStatus) {
+        orderHelper.validateOrderId(orderId);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_NOT_FOUND));
+        orderHelper.validateStatusTransition(order.getStatus(), newStatus);
+        order.setStatus(newStatus);
+        return orderRepository.save(order);
     }
 
     // Helper

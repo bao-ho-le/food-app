@@ -20,26 +20,6 @@ public class OrderController implements OrderControllerDocs {
     private final OrderService orderService;
 
     @Override
-    @GetMapping
-    public ResponseEntity<List<Order>> getAll(){
-        return ResponseEntity.ok(orderService.getAll());
-    }
-
-    @Override
-    @GetMapping("/{id}")
-    public ResponseEntity<Order> getById(@PathVariable Integer id){
-        return ResponseEntity.ok(orderService.getById(id));
-    }
-
-    @Override
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Integer id){
-        orderService.deleteById(id);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
     @GetMapping("/user")
     public ResponseEntity<List<Order>> getAllOrdersByUserId(Authentication authentication){
         return ResponseEntity.ok(orderService.getAllOrdersByUserId(authentication));

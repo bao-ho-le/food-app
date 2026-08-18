@@ -7,7 +7,6 @@ import com.example.foodie.identity.user.dto.request.UserDTO;
 import com.example.foodie.identity.user.dto.request.UserLoginDTO;
 import com.example.foodie.identity.user.dto.request.UserProfileUpdateDTO;
 import com.example.foodie.identity.user.entity.User;
-import com.example.foodie.identity.user.enums.RoleName;
 import com.example.foodie.identity.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -110,12 +109,6 @@ public class UserHelper {
     public void validateBlockingType(Integer type) {
         if (type == null || (type != 0 && type != 1)) {
             throw new IdentityException(ErrorCode.USER_BLOCK_TYPE_INVALID);
-        }
-    }
-
-    public void validateAdminRole(User user) {
-        if (user.getRole().getRoleName() != RoleName.ADMIN) {
-            throw new IdentityException(ErrorCode.USER_FORBIDDEN_NOT_ADMIN);
         }
     }
 

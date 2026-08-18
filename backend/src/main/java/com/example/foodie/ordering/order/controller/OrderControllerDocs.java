@@ -23,12 +23,6 @@ import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCH
 @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
 public interface OrderControllerDocs {
 
-    ResponseEntity<List<Order>> getAll();
-
-    ResponseEntity<Order> getById(@PathVariable Integer id);
-
-    ResponseEntity<Void> deleteById(@PathVariable Integer id);
-
     @Operation(summary = "Lấy danh sách đơn hàng của người dùng", description = "Trả về toàn bộ đơn hàng của người dùng đang đăng nhập.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công"),

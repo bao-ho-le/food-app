@@ -174,10 +174,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> getAllUsers(Authentication authentication) {
-        User requestingUser = userHelper.getUserFromAuthentication(authentication);
-        userHelper.validateAdminRole(requestingUser);
-
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 

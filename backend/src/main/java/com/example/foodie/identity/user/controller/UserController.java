@@ -1,20 +1,15 @@
 package com.example.foodie.identity.user.controller;
 
-import com.example.foodie.identity.user.dto.request.AdminDTO;
 import com.example.foodie.identity.user.dto.request.ResetPasswordDTO;
 import com.example.foodie.identity.user.dto.request.UserDTO;
 import com.example.foodie.identity.user.dto.request.UserLoginDTO;
 import com.example.foodie.identity.user.dto.request.UserProfileUpdateDTO;
-import com.example.foodie.identity.user.dto.response.AdminResponseDTO;
 import com.example.foodie.identity.user.dto.response.UserLoginResponseDTO;
 import com.example.foodie.identity.user.dto.response.UserProfileDTO;
 import com.example.foodie.identity.user.dto.response.UserResponseDTO;
-import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.identity.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-
-import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,14 +33,6 @@ public class UserController implements UserControllerDocs {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(userService.register(userDTO));
-    }
-
-    @Override
-    @PostMapping("/register-admin")
-    public ResponseEntity<AdminResponseDTO> registerAdmin(@Valid @RequestBody AdminDTO adminDTO) {
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(userService.registerAdmin(adminDTO));
     }
 
     @Override
@@ -79,19 +66,5 @@ public class UserController implements UserControllerDocs {
     @PostMapping("/logout")
     public void logout(){
         System.out.println("Log out");
-    }
-
-    @Override
-    @GetMapping("/getAll")
-    public ResponseEntity<List<User>> getAllUsers(Authentication authentication){
-        return ResponseEntity.ok(userService.getAllUsers(authentication));
-    }
-
-    @Override
-    @PostMapping("/blocking/{id}/{type}")
-    public ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type){
-        userService.blocking(id, type);
-
-        return ResponseEntity.ok("Success");
     }
 }

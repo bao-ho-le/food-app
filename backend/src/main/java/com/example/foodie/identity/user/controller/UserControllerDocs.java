@@ -1,15 +1,12 @@
 package com.example.foodie.identity.user.controller;
 
-import com.example.foodie.identity.user.dto.request.AdminDTO;
 import com.example.foodie.identity.user.dto.request.ResetPasswordDTO;
 import com.example.foodie.identity.user.dto.request.UserDTO;
 import com.example.foodie.identity.user.dto.request.UserLoginDTO;
 import com.example.foodie.identity.user.dto.request.UserProfileUpdateDTO;
-import com.example.foodie.identity.user.dto.response.AdminResponseDTO;
 import com.example.foodie.identity.user.dto.response.UserLoginResponseDTO;
 import com.example.foodie.identity.user.dto.response.UserProfileDTO;
 import com.example.foodie.identity.user.dto.response.UserResponseDTO;
-import com.example.foodie.identity.user.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,11 +16,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCHEME;
@@ -38,8 +32,6 @@ public interface UserControllerDocs {
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc email đã tồn tại")
     })
     ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserDTO userDTO);
-
-    ResponseEntity<AdminResponseDTO> registerAdmin(@Valid @RequestBody AdminDTO adminDTO);
 
     @Operation(summary = "Đăng nhập", description = "Xác thực bằng email/mật khẩu và trả về JWT access token. Không yêu cầu đăng nhập.")
     @ApiResponses({
@@ -77,8 +69,4 @@ public interface UserControllerDocs {
                                                        @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO);
 
     void logout();
-
-    ResponseEntity<List<User>> getAllUsers(Authentication authentication);
-
-    ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type);
 }

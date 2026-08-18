@@ -1,6 +1,7 @@
 package com.example.foodie.identity.user.dto.response;
 
 import com.example.foodie.identity.user.enums.Gender;
+import com.example.foodie.identity.user.enums.RoleName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
@@ -18,4 +19,5 @@ public class UserProfileDTO {
     private Gender gender;
     private String phoneNumber;
     private String email;
+    private RoleName roleName;
 }

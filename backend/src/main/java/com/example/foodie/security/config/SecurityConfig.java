@@ -58,7 +58,6 @@ public class SecurityConfig {
 
                         .requestMatchers(POST,
                                 String.format("%s/users/login", apiPrefix),
-                                String.format("%s/users/register-admin", apiPrefix),
                                 String.format("%s/users/register", apiPrefix))
                             .permitAll()
 
@@ -66,6 +65,9 @@ public class SecurityConfig {
                                 String.format("%s/dishes/average_rating", apiPrefix),
                                 String.format("%s/dishes/allIds", apiPrefix))
                             .permitAll()
+
+                        .requestMatchers(String.format("%s/admin/**", apiPrefix))
+                            .hasRole("ADMIN")
 
                         .anyRequest()
                             .authenticated()
@@ -81,7 +83,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(frontendURL));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
     

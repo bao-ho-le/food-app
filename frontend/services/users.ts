@@ -7,6 +7,7 @@ export type UserProfileResponse = {
   gender?: "MALE" | "FEMALE" | "OTHER"
   phoneNumber?: string
   email?: string
+  roleName?: "ADMIN" | "USER"
 }
 
 type FetchUserProfileOptions = {
@@ -102,11 +103,11 @@ function getStoredAuthHeaders(): HeadersInit {
 
 export async function fetchAllUsers(): Promise<User[]> {
   const headers = getStoredAuthHeaders()
-  const data = await apiClient.get<AdminUserResponse[]>("/users/getAll", { headers })
+  const data = await apiClient.get<AdminUserResponse[]>("/admin/users", { headers })
   return data.map(mapAdminUser)
 }
 
 export async function setUserBlocking(id: number | string, type: 0 | 1): Promise<string> {
   const headers = getStoredAuthHeaders()
-  return apiClient.post<string>(`/users/blocking/${id}/${type}`, undefined, { headers })
+  return apiClient.post<string>(`/admin/users/blocking/${id}/${type}`, undefined, { headers })
 }

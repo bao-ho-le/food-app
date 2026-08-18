@@ -141,3 +141,22 @@ export interface TopSelling {
   dishId: string
   quantitySold: number
 }
+
+// Admin Order Types
+export type AdminOrderStatus = "PENDING" | "PREPARING" | "DELIVERED" | "CANCELLED"
+
+export interface AdminOrder {
+  id: string
+  customerName: string
+  deliveryAddress: string
+  totalPrice: number
+  status: AdminOrderStatus
+  createdAt: string
+}
+
+export interface AdminOrderItem {
+  dishName: string
+  imageUrl?: string
+  quantity: number
+  price: number
+}

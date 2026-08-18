@@ -2,6 +2,7 @@ package com.example.foodie.ordering.order.service;
 
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
 import com.example.foodie.ordering.order.entity.Order;
+import com.example.foodie.ordering.order.enums.Status;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ public interface OrderService {
     public Order createOrder(Authentication authentication, Integer addressId);
     public List<Order> getAllOrdersByUserId(Authentication authentication);
     public List<OrderDishResponseDTO> getAllOrderItems(Integer orderId);
+    public Order updateStatus(Integer orderId, Status newStatus);
 }

@@ -37,7 +37,7 @@ export async function createRestaurant(input: CreateRestaurantInput): Promise<Re
     address: input.address,
     phoneNumber: input.phone,
   };
-  const data = await apiClient.post<any>("/restaurants", payload, { headers: getAuthHeaders() });
+  const data = await apiClient.post<any>("/admin/restaurants", payload, { headers: getAuthHeaders() });
   return mapRestaurant(data);
 }
 
@@ -47,11 +47,11 @@ export async function updateRestaurant(id: number | string, input: UpdateRestaur
     address: input.address,
     phoneNumber: input.phone,
   };
-  const data = await apiClient.put<any>(`/restaurants/${id}`, payload, { headers: getAuthHeaders() });
+  const data = await apiClient.put<any>(`/admin/restaurants/${id}`, payload, { headers: getAuthHeaders() });
   return mapRestaurant(data);
 }
 
 export async function setRestaurantBlocking(id: number | string, type: 0 | 1): Promise<string> {
   const headers = getAuthHeaders();
-  return apiClient.post<string>(`/restaurants/blocking/${id}/${type}`, undefined, { headers });
+  return apiClient.post<string>(`/admin/restaurants/blocking/${id}/${type}`, undefined, { headers });
 }

@@ -29,6 +29,6 @@ public interface UserService {
     UserProfileDTO getUserProfileByToken(Authentication authentication);
     UserProfileDTO updateProfile(Authentication authentication, UserProfileUpdateDTO userProfileUpdateDTO);
 
-    List<User> getAllUsers(Authentication authentication);
+    List<User> getAllUsers();
     void blocking(Integer id, Integer type);
 }

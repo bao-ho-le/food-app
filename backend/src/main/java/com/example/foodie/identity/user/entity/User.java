@@ -3,6 +3,7 @@ package com.example.foodie.identity.user.entity;
 import com.example.foodie.identity.user.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -19,6 +20,7 @@ import java.util.List;
 @Data
 @Entity
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
 
     @Id
@@ -51,6 +53,7 @@ public class User {
 
     @NotNull(message="Mật khẩu không được để trống")
     @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
+    @JsonIgnore
     private String password;
 
     @NotNull

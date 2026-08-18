@@ -72,11 +72,11 @@ export async function createDish(input: CreateDishInput): Promise<AdminDish> {
     tags: input.tags,
     imageUrl: input.imageUrl,
   }
-  const data = await apiClient.post<DishApiResponse>("/dishes", payload, { headers })
+  const data = await apiClient.post<DishApiResponse>("/admin/dishes", payload, { headers })
   return mapAdminDish(data)
 }
 
 export async function setDishBlocking(id: number | string, type: 0 | 1): Promise<string> {
   const headers = getAuthHeaders()
-  return apiClient.post<string>(`/dishes/blocking/${id}/${type}`, undefined, { headers })
+  return apiClient.post<string>(`/admin/dishes/blocking/${id}/${type}`, undefined, { headers })
 }

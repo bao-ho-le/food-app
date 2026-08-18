@@ -21,7 +21,6 @@ public enum ErrorCode {
     USER_OLD_PASSWORD_REQUIRED(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không được để trống"),
     USER_PROFILE_REQUEST_REQUIRED(HttpStatus.BAD_REQUEST, "Thông tin hồ sơ không được để trống"),
     USER_BLOCK_TYPE_INVALID(HttpStatus.BAD_REQUEST, "Loại không hợp lệ"),
-    USER_FORBIDDEN_NOT_ADMIN(HttpStatus.FORBIDDEN, "Chỉ admin mới có quyền truy cập danh sách người dùng"),
     USER_PASSWORD_REQUIRED(HttpStatus.BAD_REQUEST, "Mật khẩu không được để trống"),
     USER_PASSWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "Mật khẩu phải có ít nhất 6 ký tự"),
     USER_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "Email đã tồn tại"),
@@ -90,6 +89,8 @@ public enum ErrorCode {
     ORDER_CART_EMPTY(HttpStatus.BAD_REQUEST, "Không có món nào trong giỏ hàng để đặt"),
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Đơn hàng không tồn tại"),
     ORDER_DISH_NOT_FOUND(HttpStatus.NOT_FOUND, "Order dish không tồn tại"),
+    ORDER_STATUS_REQUIRED(HttpStatus.BAD_REQUEST, "Trạng thái đơn hàng không được để trống"),
+    ORDER_INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "Không thể chuyển sang trạng thái này"),
 
     // ===================== Ordering.UserDish =====================
     USERDISH_ID_REQUIRED(HttpStatus.BAD_REQUEST, "Id món trong giỏ không được để trống"),

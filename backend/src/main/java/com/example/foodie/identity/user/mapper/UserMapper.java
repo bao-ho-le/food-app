@@ -74,6 +74,7 @@ public class UserMapper {
                 .phoneNumber(user.getPhoneNumber())
                 .birthday(user.getBirthday())
                 .fullName(user.getFullName())
+                .roleName(user.getRole().getRoleName())
                 .build();
     }
 }
