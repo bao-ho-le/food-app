@@ -2,7 +2,7 @@ package com.example.foodie.ordering.userdish.controller;
 
 import com.example.foodie.ordering.userdish.dto.request.UpdateDishQuantityDTO;
 import com.example.foodie.ordering.userdish.dto.request.UserDishDTO;
-import com.example.foodie.ordering.userdish.entity.UserDish;
+import com.example.foodie.ordering.userdish.dto.response.UserDishResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,7 +28,7 @@ public interface UserDishControllerDocs {
             @ApiResponse(responseCode = "200", description = "Lấy giỏ hàng thành công"),
             @ApiResponse(responseCode = "404", description = "Không thể lấy giỏ hàng")
     })
-    ResponseEntity<List<UserDish>> getAllUserDishes(Authentication authentication);
+    ResponseEntity<List<UserDishResponseDTO>> getAllUserDishes(Authentication authentication);
 
     @Operation(summary = "Thêm món vào giỏ hàng", description = "Thêm một món ăn với số lượng chỉ định vào giỏ hàng.")
     @ApiResponses({

@@ -59,6 +59,7 @@ export default function CartPage() {
 
   const availableItems = cart.items.filter(item => item.dish.isAvailable)
   const selectedAddress = addresses.find(addr => addr.id === selectedAddressId)
+  const hasNoAddress = !addressLoading && addresses.length === 0
 
   const truncateAddress = (address: string | undefined, maxLength: number = 55) => {
     if (!address) return "Chọn địa chỉ"
@@ -123,8 +124,6 @@ export default function CartPage() {
         const data = await fetchUserAddresses(token)
         if (!isMounted) return
         setAddresses(data)
-        const defaultAddr = data.find((addr) => addr.isDefault)
-        setSelectedAddressId(defaultAddr?.id ?? data[0]?.id)
       } catch (error) {
         if (!isMounted) return
         setAddressError("Không thể tải địa chỉ giao hàng.")
@@ -140,6 +139,13 @@ export default function CartPage() {
       isMounted = false
     }
   }, [])
+
+  useEffect(() => {
+    if (addresses.length === 0) return
+    if (selectedAddressId && addresses.some((addr) => addr.id === selectedAddressId)) return
+    const defaultAddr = addresses.find((addr) => addr.isDefault)
+    setSelectedAddressId(defaultAddr?.id ?? addresses[0]?.id)
+  }, [addresses, selectedAddressId])
 
   const scheduleQuantitySync = (dishId: string, userDishId: string, quantity: number) => {
     const current = pendingQuantityUpdates.current[dishId]
@@ -426,6 +432,19 @@ export default function CartPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-3">
+                {hasNoAddress && (
+                  <div className="w-full rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    <p>Bạn chưa có địa chỉ giao hàng.</p>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-sm font-medium text-amber-900 underline"
+                      onClick={() => router.push("/user/profile?tab=addresses")}
+                    >
+                      Thêm địa chỉ ngay
+                    </Button>
+                  </div>
+                )}
                 <DialogTrigger asChild>
                   <Button
                     className="w-full h-11 text-base"

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   User,
   MapPin,
@@ -78,6 +79,16 @@ const mapApiAddressToClient = (
 })
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfilePageContent />
+    </Suspense>
+  )
+}
+
+function ProfilePageContent() {
+  const searchParams = useSearchParams()
+  const initialTab = searchParams.get("tab") === "addresses" ? "addresses" : "profile"
   const [user, setUser] = useState<User>(DEFAULT_USER)
   const [birthdate, setBirthdate] = useState<Date | undefined>(
     DEFAULT_USER.birthdate ? new Date(DEFAULT_USER.birthdate) : undefined,
@@ -411,7 +422,7 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-8">
-      <Tabs defaultValue="profile" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="grid h-auto w-full grid-cols-2 p-1">
           <TabsTrigger value="profile" className="py-2.5 text-sm md:text-base">
             <User className="mr-2 h-4 w-4" />

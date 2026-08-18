@@ -1,9 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -27,7 +27,7 @@ import { fetchAllTags } from "@/services/tags"
 import { fetchDishesRaw, type DishApiResponse } from "@/services/dishes"
 import { fetchDishReviews, type DishReviewResponse } from "@/services/reviews"
 import { addUserCartItem } from "@/services/user-cart"
-import { Search, Star, Plus, Flame, MessageCircle, MapPin, Phone, RotateCcw, CheckCircle2 } from "lucide-react"
+import { Search, Star, Plus, Flame, MessageCircle, MapPin, Phone, CheckCircle2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Pagination,
@@ -38,13 +38,12 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import type { Dish } from "@/types"
+import { SearchBar } from "@/components/search-bar"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+  FilterPopover,
+  type FilterKey,
+  type DishFilterValues,
+} from "@/components/dish-filters"
 
 const DEFAULT_DISH_META = {
   cuisine: "Món Việt",
@@ -52,8 +51,6 @@ const DEFAULT_DISH_META = {
   cookMethods: [] as string[],
   flavorProfiles: [] as string[],
 }
-
-type FilterKey = "cuisine" | "ingredient" | "method" | "flavor"
 
 const FILTER_CATEGORY_LABELS: Record<FilterKey, string> = {
   cuisine: "Ẩm thực",
@@ -79,90 +76,6 @@ const CATEGORY_KEY_BY_NAME: Record<string, FilterKey> = Object.entries(
   {} as Record<string, FilterKey>,
 )
 
-type FilterSelectProps = {
-  label: string
-  value: string
-  options: DishFilterOption[]
-  onValueChange: (value: string) => void
-}
-
-const FilterSelect = ({ label, value, options, onValueChange }: FilterSelectProps) => {
-  const selectedOptionLabel = options.find((option) => option.value === value)?.label
-
-  return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-full text-left h-auto py-6">
-        <div className="flex flex-col items-start">
-          <span className="text-xs text-muted-foreground">{label}</span>
-          <span className="text-sm font-medium text-foreground">{selectedOptionLabel}</span>
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
-type FloatingLabelInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
-  label: string
-}
-
-const FloatingLabelInput = ({ label, id, className, ...props }: FloatingLabelInputProps) => {
-  return (
-    <div className="relative">
-      <Input
-        id={id}
-        placeholder=" "
-        className={cn("peer h-13 pt-6 text-foreground", className)}
-        {...props}
-      />
-      <label
-        htmlFor={id}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-all duration-200 ease-in-out peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-focus:top-4 peer-focus:text-xs peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:text-xs"
-      >
-        {label}
-      </label>
-    </div>
-  )
-}
-
-type PriceRangeFilterProps = {
-  minPrice: string
-  maxPrice: string
-  onMinPriceChange: (value: string) => void
-  onMaxPriceChange: (value: string) => void
-}
-
-const PriceRangeFilter = ({ minPrice, maxPrice, onMinPriceChange, onMaxPriceChange }: PriceRangeFilterProps) => {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm font-medium text-foreground whitespace-nowrap">Mức giá</span>
-      <div className="flex items-center gap-2 flex-1">
-        <FloatingLabelInput
-          id="min-price"
-          type="number"
-          label="Mức giá từ"
-          value={minPrice}
-          onChange={(e) => onMinPriceChange(e.target.value)}
-        />
-        <span className="text-muted-foreground">-</span>
-        <FloatingLabelInput
-          id="max-price"
-          type="number"
-          label="Mức giá đến"
-          value={maxPrice}
-          onChange={(e) => onMaxPriceChange(e.target.value)}
-        />
-      </div>
-    </div>
-  )
-}
-
 export default function FoodPage() {
   const [dishes, setDishes] = useState<Dish[]>([])
   const [dishMetaMap, setDishMetaMap] = useState<Record<string, typeof DEFAULT_DISH_META>>(dishMetadata)
@@ -182,6 +95,11 @@ export default function FoodPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const { addToCart } = useCart()
   const { toast } = useToast()
+  const [navSlot, setNavSlot] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setNavSlot(document.getElementById("user-nav-search-slot"))
+  }, [])
 
   const ITEMS_PER_PAGE = 6
 
@@ -537,14 +455,25 @@ export default function FoodPage() {
     })
   }
 
-  const handleResetFilters = () => {
-    setSearchQuery("")
-    setSelectedCuisine("all")
-    setSelectedIngredient("all")
-    setSelectedMethod("all")
-    setSelectedFlavor("all")
-    setMinPrice("")
-    setMaxPrice("")
+  const committedFilters: DishFilterValues = useMemo(
+    () => ({
+      cuisine: selectedCuisine,
+      ingredient: selectedIngredient,
+      method: selectedMethod,
+      flavor: selectedFlavor,
+      minPrice,
+      maxPrice,
+    }),
+    [selectedCuisine, selectedIngredient, selectedMethod, selectedFlavor, minPrice, maxPrice],
+  )
+
+  const handleApplyFilters = (values: DishFilterValues) => {
+    setSelectedCuisine(values.cuisine)
+    setSelectedIngredient(values.ingredient)
+    setSelectedMethod(values.method)
+    setSelectedFlavor(values.flavor)
+    setMinPrice(values.minPrice)
+    setMaxPrice(values.maxPrice)
   }
 
   const getRestaurant = (dish: Dish) => {
@@ -556,79 +485,30 @@ export default function FoodPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8 space-y-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Khám phá món ăn</h1>
-          <div className="relative w-full md:w-[320px] lg:w-[380px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm món ăn..."
+      {navSlot &&
+        createPortal(
+          <div className="flex w-full max-w-md items-center gap-2">
+            <SearchBar
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              onChange={setSearchQuery}
+              placeholder="Tìm kiếm món ăn..."
+              leftSlot={<Search className="h-4 w-4" />}
+              className="h-10 flex-1"
             />
-          </div>
-        </div>
-        <p className="text-muted-foreground">Tìm kiếm và đặt món ăn yêu thích của bạn</p>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[1fr_1fr_1fr_1fr_2fr_auto] items-end">
-          <FilterSelect
-            label="Ẩm thực"
-            value={selectedCuisine}
-            options={filterOptions.cuisine}
-            onValueChange={setSelectedCuisine}
-          />
-          <FilterSelect
-            label="Nguyên liệu chính"
-            value={selectedIngredient}
-            options={filterOptions.ingredient}
-            onValueChange={setSelectedIngredient}
-          />
-          <FilterSelect
-            label="Phương pháp chế biến"
-            value={selectedMethod}
-            options={filterOptions.method}
-            onValueChange={setSelectedMethod}
-          />
-          <FilterSelect
-            label="Hương vị"
-            value={selectedFlavor}
-            options={filterOptions.flavor}
-            onValueChange={setSelectedFlavor}
-          />
-          <div className="xl:col-span-1">
-            <PriceRangeFilter
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={setMinPrice}
-              onMaxPriceChange={setMaxPrice}
+            <FilterPopover
+              filters={committedFilters}
+              filterOptions={filterOptions}
+              onApply={handleApplyFilters}
             />
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={handleResetFilters} className="h-13 w-13">
-                  <RotateCcw className="h-4 w-4" />
-                  <span className="sr-only">Khôi phục bộ lọc</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Khôi phục bộ lọc</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          </div>,
+          navSlot,
+        )}
+      {(filtersLoading || filtersError) && (
+        <div className="mb-4 text-center text-sm">
+          {filtersLoading && <span className="text-muted-foreground">Đang tải bộ lọc...</span>}
+          {filtersError && <span className="text-destructive">{filtersError}</span>}
         </div>
-        {filtersLoading && (
-          <p className="mt-2 text-sm text-muted-foreground">Đang tải bộ lọc...</p>
-        )}
-        {filtersError && (
-          <p className="mt-2 text-sm text-destructive">{filtersError}</p>
-        )}
-      </div>
+      )}
       {dishesError && (
         <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {dishesError}

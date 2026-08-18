@@ -2,7 +2,7 @@ package com.example.foodie.ordering.userdish.controller;
 
 import com.example.foodie.ordering.userdish.dto.request.UpdateDishQuantityDTO;
 import com.example.foodie.ordering.userdish.dto.request.UserDishDTO;
-import com.example.foodie.ordering.userdish.entity.UserDish;
+import com.example.foodie.ordering.userdish.dto.response.UserDishResponseDTO;
 import com.example.foodie.ordering.userdish.service.UserDishService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -22,7 +22,7 @@ public class UserDishController implements UserDishControllerDocs {
 
     @Override
     @GetMapping
-    public ResponseEntity<List<UserDish>> getAllUserDishes(Authentication authentication){
+    public ResponseEntity<List<UserDishResponseDTO>> getAllUserDishes(Authentication authentication){
         return ResponseEntity.ok(userDishService.getAllUserDishesByUserId(authentication));
     }
 

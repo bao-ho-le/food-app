@@ -91,10 +91,10 @@ export default function UserLayout({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="container mx-auto flex h-16 items-center gap-4 px-4">
           <div className="flex items-center gap-8">
             <Logo />
-            <nav className="hidden items-center gap-6 md:flex">
+            <nav className="hidden items-center gap-6 lg:flex">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname.startsWith(item.href);
@@ -113,6 +113,8 @@ export default function UserLayout({
               })}
             </nav>
           </div>
+
+          <div id="user-nav-search-slot" className="hidden flex-1 items-center justify-center md:flex" />
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative" asChild>

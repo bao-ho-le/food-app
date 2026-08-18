@@ -8,8 +8,10 @@ import com.example.foodie.common.exception.business_exception.OrderingException;
 import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.identity.user.helper.UserHelper;
 import com.example.foodie.ordering.userdish.dto.request.UserDishDTO;
+import com.example.foodie.ordering.userdish.dto.response.UserDishResponseDTO;
 import com.example.foodie.ordering.userdish.entity.UserDish;
 import com.example.foodie.ordering.userdish.helper.UserDishHelper;
+import com.example.foodie.ordering.userdish.mapper.UserDishMapper;
 import com.example.foodie.ordering.userdish.repository.UserDishRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -25,6 +27,7 @@ public class UserDishServiceImpl implements UserDishService {
     private final DishRepository dishRepository;
     private final UserDishHelper userDishHelper;
     private final UserHelper userHelper;
+    private final UserDishMapper userDishMapper;
 
     @Override
     public List<UserDish> getAllUserDishes(){
@@ -37,10 +40,12 @@ public class UserDishServiceImpl implements UserDishService {
     }
 
     @Override
-    public List<UserDish> getAllUserDishesByUserId(Authentication authentication){
+    public List<UserDishResponseDTO> getAllUserDishesByUserId(Authentication authentication){
         User user = userHelper.getUserFromAuthentication(authentication);
 
-        return userDishRepository.findAllByUser_Id(user.getId());
+        return userDishRepository.findAllByUser_Id(user.getId()).stream()
+                .map(userDishMapper::toDto)
+                .toList();
     }
 
     @Override
