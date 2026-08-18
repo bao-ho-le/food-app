@@ -5,6 +5,7 @@ import com.example.foodie.catalog.dish.dto.response.DishDTO;
 import com.example.foodie.catalog.dish.entity.Dish;
 import com.example.foodie.catalog.restaurant.entity.Restaurant;
 import com.example.foodie.catalog.tag.entity.Tag;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class DishMapper {
                 .name(dish.getName())
                 .price(dish.getPrice())
                 .isAvailable(dish.isAvailable())
-                .restaurant(dish.getRestaurant())
+                .restaurant((Restaurant) Hibernate.unproxy(dish.getRestaurant()))
                 .rating(rating)
                 .tags(tags)
                 .url(imageUrl)

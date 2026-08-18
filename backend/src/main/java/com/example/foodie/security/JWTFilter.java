@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.jsonwebtoken.JwtException;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,7 +31,11 @@ public class JWTFilter extends OncePerRequestFilter {
         boolean hasBearerToken = authHeader != null && authHeader.startsWith("Bearer ");
         if(hasBearerToken){
             token = authHeader.substring(7);
-            email = jwtService.findUserEmail(token);
+            try {
+                email = jwtService.findUserEmail(token);
+            } catch (JwtException e) {
+                email = null;
+            }
         }
 
         boolean shouldSkipAuthentication = email == null
