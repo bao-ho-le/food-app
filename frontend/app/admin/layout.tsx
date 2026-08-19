@@ -32,6 +32,7 @@ import {
   LogOut,
   Home,
   Store,
+  Settings,
 } from "lucide-react";
 import { User } from "@/types";
 import { fetchUserProfile } from "@/services/users";
@@ -163,6 +164,7 @@ export default function AdminLayout({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton size="lg" tooltip={user.name}>
+                    <Settings />
                     <span>{user.name}</span>
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>

@@ -38,6 +38,9 @@ public enum ErrorCode {
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "Địa chỉ không tồn tại"),
     ADDRESS_ALREADY_EXISTS(HttpStatus.CONFLICT, "User đã có địa chỉ này rồi"),
 
+    // ===================== Identity.Dashboard =====================
+    DASHBOARD_INVALID_TREND_PERIOD(HttpStatus.BAD_REQUEST, "Khoảng thời gian không hợp lệ, chỉ chấp nhận 7, 14 hoặc 30 ngày"),
+
     // ===================== Catalog.Restaurant =====================
     RESTAURANT_ID_REQUIRED(HttpStatus.BAD_REQUEST, "Id nhà hàng không được để trống"),
     RESTAURANT_ID_INVALID(HttpStatus.BAD_REQUEST, "Id nhà hàng không hợp lệ"),
