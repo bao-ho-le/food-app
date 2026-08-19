@@ -9,6 +9,7 @@ function mapRestaurant(r: any): Restaurant {
     address: r.address,
     phone: r.phoneNumber,
     isActive: Boolean(r.available),
+    createdAt: r.createdAt,
   };
 }
 

@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client"
-import type { User } from "@/types"
+import type { Address, User } from "@/types"
 
 export type UserProfileResponse = {
   fullName?: string
@@ -110,4 +110,21 @@ export async function fetchAllUsers(): Promise<User[]> {
 export async function setUserBlocking(id: number | string, type: 0 | 1): Promise<string> {
   const headers = getStoredAuthHeaders()
   return apiClient.post<string>(`/admin/users/blocking/${id}/${type}`, undefined, { headers })
+}
+
+type AddressApiResponse = {
+  id: number | string
+  address: string
+  isDefault?: boolean
+}
+
+export async function fetchAdminUserAddresses(userId: number | string): Promise<Address[]> {
+  const headers = getStoredAuthHeaders()
+  const data = await apiClient.get<AddressApiResponse[]>(`/admin/users/${userId}/addresses`, { headers })
+  return data.map((a) => ({
+    id: String(a.id),
+    userId: String(userId),
+    address: a.address,
+    isDefault: Boolean(a.isDefault),
+  }))
 }

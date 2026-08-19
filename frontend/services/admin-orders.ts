@@ -7,7 +7,7 @@ type OrderApiResponse = {
   totalPrice: number
   deliveryAddress: string
   createdAt: string
-  user?: { fullName?: string }
+  user?: { fullName?: string; email?: string; phoneNumber?: string }
 }
 
 type OrderItemApiResponse = {
@@ -28,6 +28,8 @@ function mapAdminOrder(order: OrderApiResponse): AdminOrder {
   return {
     id: String(order.id),
     customerName: order.user?.fullName ?? "Không rõ",
+    customerEmail: order.user?.email,
+    customerPhone: order.user?.phoneNumber,
     deliveryAddress: order.deliveryAddress,
     totalPrice: order.totalPrice,
     status: order.status as AdminOrder["status"],

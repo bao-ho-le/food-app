@@ -42,6 +42,13 @@ function mapAdminDish(dish: DishApiResponse): AdminDish {
     image: dish.url || "",
     isAvailable: Boolean(dish.available),
     restaurantName: dish.restaurant?.name ?? "Không rõ",
+    tags: (dish.tags ?? []).map((t) => ({
+      id: String(t.id ?? t.name),
+      name: t.name,
+      categoryName: t.category?.name,
+    })),
+    restaurantAddress: dish.restaurant?.address,
+    restaurantPhone: dish.restaurant?.phoneNumber,
   }
 }
 

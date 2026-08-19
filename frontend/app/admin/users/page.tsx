@@ -3,26 +3,55 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AdminTableFrame } from "@/components/admin/admin-table-frame"
+import { AdminFilterPopover, type FilterSectionDef } from "@/components/admin/filter-popover"
+import { DetailRow, DetailSection, InfoGrid } from "@/components/admin/detail-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, CheckCircle2, Users as UsersIcon, AlertTriangle, FilterX } from "lucide-react"
-import type { User } from "@/types"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Search, MoreVertical, CheckCircle2, Users as UsersIcon, AlertTriangle, FilterX,
+  Eye, ShieldCheck, ShieldOff, Lock, Unlock, MapPin,
+} from "lucide-react"
+import type { Address, User } from "@/types"
 import { useToast } from "@/hooks/use-toast"
 import { useAdminUsers } from "@/hooks/users/use-admin-users"
-import { setUserBlocking } from "@/services/users"
+import { fetchAdminUserAddresses, setUserBlocking } from "@/services/users"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-// Đã bỏ bộ lọc vai trò/trạng thái theo yêu cầu
-// Bỏ avatar theo yêu cầu
+
+type UserFilterValues = { role: string; status: string }
+const DEFAULT_USER_FILTER_VALUES: UserFilterValues = { role: "all", status: "all" }
+const USER_FILTER_SECTIONS: FilterSectionDef[] = [
+  {
+    key: "role",
+    label: "Vai trò",
+    options: [
+      { value: "all", label: "Tất cả" },
+      { value: "user", label: "Khách hàng" },
+      { value: "admin", label: "Quản trị viên" },
+    ],
+  },
+  {
+    key: "status",
+    label: "Trạng thái",
+    options: [
+      { value: "all", label: "Tất cả" },
+      { value: "active", label: "Đang hoạt động" },
+      { value: "locked", label: "Bị khoá" },
+    ],
+  },
+]
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   // Bỏ filter, chỉ giữ search
   const [page, setPage] = useState(1)
   const [quickFilter, setQuickFilter] = useState<"all"|"customers"|"admins"|"active"|"locked">("all")
+  const [filters, setFilters] = useState<UserFilterValues>(DEFAULT_USER_FILTER_VALUES)
   const pageSize = 10
 
   const { toast } = useToast()
@@ -30,6 +59,25 @@ export default function UsersPage() {
   const [confirmUser, setConfirmUser] = useState<User | null>(null)
   const [confirmRoleUser, setConfirmRoleUser] = useState<User | null>(null)
   const [blockingId, setBlockingId] = useState<string | null>(null)
+  const [detailUser, setDetailUser] = useState<User | null>(null)
+  const [detailAddresses, setDetailAddresses] = useState<Address[]>([])
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState<string | null>(null)
+
+  async function openDetail(user: User) {
+    setDetailUser(user)
+    setDetailAddresses([])
+    setDetailError(null)
+    setDetailLoading(true)
+    try {
+      const addresses = await fetchAdminUserAddresses(user.id)
+      setDetailAddresses(addresses)
+    } catch (error) {
+      setDetailError(error instanceof Error ? error.message : "Không thể tải sổ địa chỉ.")
+    } finally {
+      setDetailLoading(false)
+    }
+  }
 
   function normalizeId(value: string) {
     const trimmed = value.trim()
@@ -57,9 +105,12 @@ export default function UsersPage() {
         default:
           matchesQuick = true
       }
-      return matchesQuery && matchesQuick
+      const matchesRole = filters.role === "all" || user.role === filters.role
+      const matchesStatus =
+        filters.status === "all" || (filters.status === "active" ? user.isActive : !user.isActive)
+      return matchesQuery && matchesQuick && matchesRole && matchesStatus
     })
-  }, [searchQuery, quickFilter, users])
+  }, [searchQuery, quickFilter, filters, users])
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
   // Đảm bảo trang hợp lệ khi dữ liệu lọc thay đổi
@@ -77,7 +128,7 @@ export default function UsersPage() {
   // Reset về trang 1 mỗi khi điều kiện lọc thay đổi
   useEffect(() => {
     setPage(1)
-  }, [quickFilter, searchQuery])
+  }, [quickFilter, searchQuery, filters])
 
   // Nếu tổng số trang thay đổi và nhỏ hơn trang hiện tại, kéo về trang cuối hợp lệ
   useEffect(() => {
@@ -121,6 +172,7 @@ export default function UsersPage() {
   function resetFilters() {
     setSearchQuery("")
     setQuickFilter("all")
+    setFilters(DEFAULT_USER_FILTER_VALUES)
     setPage(1)
   }
 
@@ -139,8 +191,8 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-8 px-18 pt-6 bg-background flex-1">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="flex flex-1 min-h-0 flex-col gap-8 px-18 pt-6 pb-6 bg-background">
+      <div className="shrink-0 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <button onClick={() => { setQuickFilter('all'); setPage(1) }}
           className={`rounded-xl  p-4 text-center transition-all hover:shadow-sm hover:-translate-y-[1px] ${quickFilter==='all' ? 'ring-3 ring-violet-400 bg-violet-100 text-violet-700' : 'border-violet-200 bg-violet-200/60 hover:bg-violet-100 text-violet-700'}`}>
           <div className="text-sm font-medium p-1">Tổng người dùng</div>
@@ -168,27 +220,27 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <Card className="border-muted/40 px-3">
-        <CardHeader className="pb-0">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-1">
-              <CardTitle className="text-2xl font-semibold tracking-tight">Danh sách người dùng</CardTitle>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative w-full sm:w-64">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm tên hoặc email..."
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
-                  className="pl-10 h-10"
-                />
-              </div>
-            </div>
+      <div className="shrink-0 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-start">
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Tìm tên hoặc email..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+              className="pl-10 h-10"
+            />
           </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {error ? (
+          <AdminFilterPopover
+            sections={USER_FILTER_SECTIONS}
+            values={filters}
+            defaultValues={DEFAULT_USER_FILTER_VALUES}
+            onApply={setFilters}
+          />
+        </div>
+      </div>
+
+      {error ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
@@ -231,9 +283,18 @@ export default function UsersPage() {
               </EmptyContent>
             </Empty>
           ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
-              <TableHeader>
+          <AdminTableFrame
+            className="flex-1"
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            caption={
+              <>Hiển thị {(filteredUsers.length === 0) ? 0 : (page - 1) * pageSize + 1}
+              –{Math.min(page * pageSize, filteredUsers.length)} trong tổng {filteredUsers.length}</>
+            }
+          >
+            <Table className="[&_th]:py-4 [&_td]:py-4 [&_th]:px-6 [&_td]:px-6 [&_td:last-child]:py-2">
+              <TableHeader className="sticky top-0 z-10 bg-background">
                 <TableRow>
                   <TableHead className="w-[28%] min-w-[200px]">Tên user</TableHead>
                   <TableHead className="w-[24%] min-w-[220px]">Email</TableHead>
@@ -246,9 +307,9 @@ export default function UsersPage() {
               <TableBody>
                   {pagedUsers.map((user) => (
                   <TableRow className="hover:bg-muted/40" key={user.id}>
-                    <TableCell className="font-medium max-w-[240px]">
+                    <TableCell className="max-w-[240px]">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm sm:text-base font-semibold leading-tight truncate" title={user.name}>{user.name}</span>
+                        <span className="truncate" title={user.name}>{user.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[260px] text-muted-foreground">
@@ -279,12 +340,15 @@ export default function UsersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-                          {/* Bỏ nút Chỉnh sửa theo yêu cầu */}
+                          <DropdownMenuItem onClick={() => openDetail(user)}>
+                            <Eye className="h-4 w-4" />Xem chi tiết
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setConfirmRoleUser(user)}>
+                            {user.role === 'admin' ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
                             {user.role === 'admin' ? 'Chuyển thành User' : 'Cấp quyền Admin'}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setConfirmUser(user)}>
+                            {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                             {user.isActive ? 'Khóa tài khoản' : 'Mở khóa'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -294,28 +358,59 @@ export default function UsersPage() {
                   ))}
               </TableBody>
             </Table>
-          </div>
+          </AdminTableFrame>
           )}
-        </CardContent>
-      </Card>
 
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Hiển thị {(filteredUsers.length === 0) ? 0 : (page - 1) * pageSize + 1}
-          –{Math.min(page * pageSize, filteredUsers.length)} trong tổng {filteredUsers.length}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Trang trước
-          </Button>
-          <div className="text-sm tabular-nums">
-            {page} / {totalPages}
+      {/* User detail dialog */}
+      <Dialog open={!!detailUser} onOpenChange={(o) => { if (!o) setDetailUser(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="items-center text-center">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={detailUser?.avatarUrl} alt={detailUser?.name} />
+              <AvatarFallback className="text-lg">{detailUser?.name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
+            </Avatar>
+            <DialogTitle className="text-center">{detailUser?.name}</DialogTitle>
+            <Badge className={detailUser?.role === "admin" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
+              {detailUser?.role === "admin" ? "Admin" : "User"}
+            </Badge>
+          </DialogHeader>
+          <div className="space-y-4">
+            <InfoGrid>
+              <DetailRow label="Email" value={detailUser?.email || "-"} />
+              <DetailRow label="Số điện thoại" value={detailUser?.phone || "Chưa có số điện thoại"} />
+              <DetailRow label="Giới tính" value={detailUser?.gender === "male" ? "Nam" : detailUser?.gender === "female" ? "Nữ" : "Khác"} />
+              <DetailRow label="Ngày sinh" value={detailUser?.birthdate ? new Date(detailUser.birthdate).toLocaleDateString("vi-VN") : "Chưa cập nhật"} />
+              <DetailRow
+                label="Trạng thái"
+                value={detailUser?.isActive
+                  ? <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang hoạt động</span>
+                  : <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Bị khoá</span>}
+              />
+              <DetailRow label="Ngày tham gia" value={detailUser?.createdAt ? new Date(detailUser.createdAt).toLocaleDateString("vi-VN") : "-"} />
+            </InfoGrid>
+            <DetailSection title="Sổ địa chỉ">
+              {detailLoading ? (
+                <p className="text-sm text-muted-foreground py-2">Đang tải sổ địa chỉ...</p>
+              ) : detailError ? (
+                <p className="text-sm text-destructive py-2">{detailError}</p>
+              ) : detailAddresses.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2">Chưa có địa chỉ</p>
+              ) : (
+                <div className="space-y-2">
+                  {detailAddresses.map((addr) => (
+                    <div key={addr.id} className="flex items-start gap-2 rounded-md border px-3 py-2">
+                      <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                      <span className="flex-1 text-sm">{addr.address}</span>
+                      {addr.isDefault && <Badge variant="secondary">Mặc định</Badge>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DetailSection>
           </div>
-          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-            Trang sau
-          </Button>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Global controlled confirm dialog */}
       <AlertDialog open={!!confirmUser} onOpenChange={(o)=>{ if(!o) setConfirmUser(null) }}>
         <AlertDialogContent>

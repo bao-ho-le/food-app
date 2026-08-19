@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AdminTableFrame } from "@/components/admin/admin-table-frame"
+import { AdminFilterPopover, type FilterSectionDef } from "@/components/admin/filter-popover"
+import { DetailRow, InfoGrid } from "@/components/admin/detail-dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, MoreVertical, RefreshCw, CheckCircle2, Package, AlertTriangle, FilterX } from "lucide-react"
+import { Search, MoreVertical, CheckCircle2, Package, AlertTriangle, FilterX, Eye, Ban } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -39,6 +40,39 @@ const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
   CANCELLED: "bg-rose-100 text-rose-700 ring-rose-200",
 }
 
+type OrderFilterValues = { status: string; time: string; total: string }
+const DEFAULT_ORDER_FILTER_VALUES: OrderFilterValues = { status: "all", time: "newest", total: "none" }
+const ORDER_FILTER_SECTIONS: FilterSectionDef[] = [
+  {
+    key: "status",
+    label: "Trạng thái",
+    options: [
+      { value: "all", label: "Tất cả" },
+      { value: "PENDING", label: STATUS_LABEL.PENDING },
+      { value: "PREPARING", label: STATUS_LABEL.PREPARING },
+      { value: "DELIVERED", label: STATUS_LABEL.DELIVERED },
+      { value: "CANCELLED", label: STATUS_LABEL.CANCELLED },
+    ],
+  },
+  {
+    key: "time",
+    label: "Thời gian",
+    options: [
+      { value: "newest", label: "Mới nhất" },
+      { value: "oldest", label: "Cũ nhất" },
+    ],
+  },
+  {
+    key: "total",
+    label: "Giá trị đơn",
+    options: [
+      { value: "none", label: "Mặc định" },
+      { value: "asc", label: "Tăng dần" },
+      { value: "desc", label: "Giảm dần" },
+    ],
+  },
+]
+
 type PendingAction = {
   order: AdminOrder
   nextStatus: AdminOrderStatus
@@ -53,8 +87,7 @@ export default function AdminOrdersPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | AdminOrderStatus>("all")
-  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "total_asc" | "total_desc">("newest")
+  const [filters, setFilters] = useState<OrderFilterValues>(DEFAULT_ORDER_FILTER_VALUES)
   const [page, setPage] = useState(1)
   const pageSize = 10
 
@@ -96,28 +129,24 @@ export default function AdminOrdersPage() {
         o.id.toLowerCase().includes(q) ||
         o.customerName.toLowerCase().includes(q) ||
         o.deliveryAddress.toLowerCase().includes(q)
-      const matchesStatus = statusFilter === "all" || o.status === statusFilter
+      const matchesStatus = filters.status === "all" || o.status === filters.status
       return matchesText && matchesStatus
     })
-  }, [orders, searchQuery, statusFilter])
+  }, [orders, searchQuery, filters.status])
 
   const sorted = useMemo(() => {
     const list = [...filtered]
-    switch (sortBy) {
-      case "oldest":
-        list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        break
-      case "total_asc":
-        list.sort((a, b) => a.totalPrice - b.totalPrice)
-        break
-      case "total_desc":
-        list.sort((a, b) => b.totalPrice - a.totalPrice)
-        break
-      default:
-        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    if (filters.total === "asc") {
+      list.sort((a, b) => a.totalPrice - b.totalPrice)
+    } else if (filters.total === "desc") {
+      list.sort((a, b) => b.totalPrice - a.totalPrice)
+    } else if (filters.time === "oldest") {
+      list.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    } else {
+      list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     }
     return list
-  }, [filtered, sortBy])
+  }, [filtered, filters.total, filters.time])
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
   const paged = useMemo(() => {
@@ -126,13 +155,12 @@ export default function AdminOrdersPage() {
     return sorted.slice(start, start + pageSize)
   }, [sorted, page, totalPages])
 
-  useEffect(() => { setPage(1) }, [searchQuery, statusFilter])
+  useEffect(() => { setPage(1) }, [searchQuery, filters])
   useEffect(() => { if (page > totalPages) setPage(totalPages) }, [totalPages, page])
 
   function resetFilters() {
     setSearchQuery("")
-    setStatusFilter("all")
-    setSortBy("newest")
+    setFilters(DEFAULT_ORDER_FILTER_VALUES)
     setPage(1)
   }
 
@@ -175,8 +203,8 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="space-y-8 px-18 pt-6 pb-10 bg-background flex-1">
-      <div className="flex flex-wrap items-center gap-3 text-[15px] sm:text-base">
+    <div className="flex flex-1 min-h-0 flex-col gap-8 px-18 pt-6 pb-10 bg-background">
+      <div className="shrink-0 flex items-center gap-2 text-[15px] sm:text-base">
         <div className="relative flex-1 sm:max-w-[22rem]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -186,40 +214,15 @@ export default function AdminOrdersPage() {
             className="pl-10 h-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-          <SelectTrigger className="w-44 h-10">
-            <SelectValue placeholder="Trạng thái" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả</SelectItem>
-            <SelectItem value="PENDING">Chờ xử lý</SelectItem>
-            <SelectItem value="PREPARING">Đang chuẩn bị</SelectItem>
-            <SelectItem value="DELIVERED">Đã giao</SelectItem>
-            <SelectItem value="CANCELLED">Đã huỷ</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-          <SelectTrigger className="h-10 w-40 justify-between">
-            <SelectValue placeholder="Sắp xếp" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">Mới nhất</SelectItem>
-            <SelectItem value="oldest">Cũ nhất</SelectItem>
-            <SelectItem value="total_desc">Giá trị đơn ↓</SelectItem>
-            <SelectItem value="total_asc">Giá trị đơn ↑</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline" size="icon" className="h-10 w-10" title="Đặt lại bộ lọc" onClick={resetFilters}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
+        <AdminFilterPopover
+          sections={ORDER_FILTER_SECTIONS}
+          values={filters}
+          defaultValues={DEFAULT_ORDER_FILTER_VALUES}
+          onApply={setFilters}
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách đơn hàng</CardTitle>
-        </CardHeader>
-        <CardContent>
-        {loadError ? (
+      {loadError ? (
           <Empty>
             <EmptyHeader>
               <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
@@ -262,9 +265,18 @@ export default function AdminOrdersPage() {
             </EmptyContent>
           </Empty>
         ) : (
-      <div className="overflow-x-auto rounded-lg border text-[15px] sm:text-base">
-        <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
-          <TableHeader>
+      <AdminTableFrame
+        className="flex-1 text-[15px] sm:text-base"
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        caption={
+          <>Hiển thị {(sorted.length === 0) ? 0 : (page - 1) * pageSize + 1}
+          –{Math.min(page * pageSize, sorted.length)} trong tổng {sorted.length}</>
+        }
+      >
+        <Table className="[&_th]:py-4 [&_td]:py-4 [&_th]:px-6 [&_td]:px-6 [&_td:last-child]:py-2">
+          <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow>
               <TableHead className="w-[10%] min-w-[100px]">Mã đơn</TableHead>
               <TableHead className="w-[18%] min-w-[160px]">Khách hàng</TableHead>
@@ -283,7 +295,7 @@ export default function AdminOrdersPage() {
                     <span className="truncate" title={o.customerName}>{o.customerName}</span>
                   </TableCell>
                   <TableCell className="max-w-[300px]">
-                    <span className="truncate" title={o.deliveryAddress}>{o.deliveryAddress}</span>
+                    <span className="block truncate" title={o.deliveryAddress}>{o.deliveryAddress}</span>
                   </TableCell>
                   <TableCell>{o.totalPrice.toLocaleString("vi-VN")}₫</TableCell>
                   <TableCell>
@@ -300,7 +312,9 @@ export default function AdminOrdersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDetail(o)}>Xem chi tiết</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDetail(o)}>
+                          <Eye className="h-4 w-4" />Xem chi tiết
+                        </DropdownMenuItem>
                         {o.status === "PENDING" && (
                           <>
                             <DropdownMenuItem
@@ -313,7 +327,7 @@ export default function AdminOrdersPage() {
                                 })
                               }
                             >
-                              Xác nhận đơn (→ Đang chuẩn bị)
+                              <CheckCircle2 className="h-4 w-4" />Xác nhận đơn (→ Đang chuẩn bị)
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
@@ -325,7 +339,7 @@ export default function AdminOrdersPage() {
                                 })
                               }
                             >
-                              Huỷ đơn
+                              <Ban className="h-4 w-4" />Huỷ đơn
                             </DropdownMenuItem>
                           </>
                         )}
@@ -341,7 +355,7 @@ export default function AdminOrdersPage() {
                                 })
                               }
                             >
-                              Đánh dấu đã giao
+                              <Package className="h-4 w-4" />Đánh dấu đã giao
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
@@ -353,7 +367,7 @@ export default function AdminOrdersPage() {
                                 })
                               }
                             >
-                              Huỷ đơn
+                              <Ban className="h-4 w-4" />Huỷ đơn
                             </DropdownMenuItem>
                           </>
                         )}
@@ -364,18 +378,30 @@ export default function AdminOrdersPage() {
               ))}
           </TableBody>
         </Table>
-      </div>
+      </AdminTableFrame>
         )}
-        </CardContent>
-      </Card>
 
       {/* Order detail dialog */}
       <Dialog open={!!detailOrder} onOpenChange={(o) => { if (!o) setDetailOrder(null) }}>
         <DialogContent>
           <DialogHeader className="items-center text-center">
             <DialogTitle className="text-center">Chi tiết đơn #{detailOrder?.id}</DialogTitle>
+            {detailOrder && (
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${STATUS_BADGE_CLASS[detailOrder.status]}`}>
+                {STATUS_LABEL[detailOrder.status]}
+              </span>
+            )}
           </DialogHeader>
-          <div className="space-y-3">
+          {detailOrder && (
+            <InfoGrid className="grid-cols-1 sm:grid-cols-2">
+              <DetailRow label="Khách hàng" value={detailOrder.customerName} />
+              <DetailRow label="Ngày đặt" value={new Date(detailOrder.createdAt).toLocaleString("vi-VN")} />
+              {detailOrder.customerEmail && <DetailRow label="Email" value={detailOrder.customerEmail} />}
+              {detailOrder.customerPhone && <DetailRow label="Số điện thoại" value={detailOrder.customerPhone} />}
+              <DetailRow className="col-span-full" label="Địa chỉ giao hàng" value={detailOrder.deliveryAddress} />
+            </InfoGrid>
+          )}
+          <div className="space-y-3 border-t pt-3">
             {detailLoading && <p className="text-center text-sm text-muted-foreground py-6">Đang tải chi tiết...</p>}
             {detailError && !detailLoading && (
               <p className="text-center text-sm text-destructive py-6">{detailError}</p>
@@ -423,24 +449,6 @@ export default function AdminOrdersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Hiển thị {(sorted.length === 0) ? 0 : (page - 1) * pageSize + 1}
-          –{Math.min(page * pageSize, sorted.length)} trong tổng {sorted.length}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Trang trước
-          </Button>
-          <div className="text-sm tabular-nums">
-            {page} / {totalPages}
-          </div>
-          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-            Trang sau
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }

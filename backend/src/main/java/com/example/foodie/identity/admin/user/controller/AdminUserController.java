@@ -1,5 +1,7 @@
 package com.example.foodie.identity.admin.user.controller;
 
+import com.example.foodie.identity.address.entity.Address;
+import com.example.foodie.identity.address.service.AddressService;
 import com.example.foodie.identity.user.dto.request.AdminDTO;
 import com.example.foodie.identity.user.dto.response.AdminResponseDTO;
 import com.example.foodie.identity.user.entity.User;
@@ -18,6 +20,7 @@ import java.util.List;
 public class AdminUserController implements AdminUserControllerDocs {
 
     private final UserService userService;
+    private final AddressService addressService;
 
     @Override
     @GetMapping
@@ -39,5 +42,11 @@ public class AdminUserController implements AdminUserControllerDocs {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(userService.registerAdmin(adminDTO));
+    }
+
+    @Override
+    @GetMapping("/{id}/addresses")
+    public ResponseEntity<List<Address>> getAddressesByUserId(@PathVariable Integer id) {
+        return ResponseEntity.ok(addressService.getAllAddressesByUserId(id));
     }
 }

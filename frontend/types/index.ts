@@ -39,6 +39,7 @@ export interface Restaurant {
   address: string
   phone: string
   isActive: boolean
+  createdAt?: string
 }
 
 // Dish Types
@@ -65,6 +66,9 @@ export interface AdminDish {
   image: string
   isAvailable: boolean
   restaurantName: string
+  tags: { id: string; name: string; categoryName?: string }[]
+  restaurantAddress?: string
+  restaurantPhone?: string
 }
 
 // Cart Types
@@ -148,6 +152,8 @@ export type AdminOrderStatus = "PENDING" | "PREPARING" | "DELIVERED" | "CANCELLE
 export interface AdminOrder {
   id: string
   customerName: string
+  customerEmail?: string
+  customerPhone?: string
   deliveryAddress: string
   totalPrice: number
   status: AdminOrderStatus

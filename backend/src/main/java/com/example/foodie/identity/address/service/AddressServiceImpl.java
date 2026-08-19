@@ -71,6 +71,11 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    public List<Address> getAllAddressesByUserId(Integer userId){
+        return addressRepository.findAllByUser_Id(userId);
+    }
+
+    @Override
     public void deleteAddressById(Integer addressId){
         addressHelper.validateAddressId(addressId);
 

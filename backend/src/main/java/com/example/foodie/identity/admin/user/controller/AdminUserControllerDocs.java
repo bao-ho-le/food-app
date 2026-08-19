@@ -1,5 +1,6 @@
 package com.example.foodie.identity.admin.user.controller;
 
+import com.example.foodie.identity.address.entity.Address;
 import com.example.foodie.identity.user.dto.request.AdminDTO;
 import com.example.foodie.identity.user.dto.response.AdminResponseDTO;
 import com.example.foodie.identity.user.entity.User;
@@ -23,4 +24,6 @@ public interface AdminUserControllerDocs {
     ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type);
 
     ResponseEntity<AdminResponseDTO> registerAdmin(@Valid @RequestBody AdminDTO adminDTO);
+
+    ResponseEntity<List<Address>> getAddressesByUserId(@PathVariable Integer id);
 }

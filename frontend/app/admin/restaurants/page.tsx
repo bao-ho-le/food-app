@@ -3,12 +3,14 @@
 import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AdminTableFrame } from "@/components/admin/admin-table-frame"
+import { AdminFilterPopover, type FilterSectionDef } from "@/components/admin/filter-popover"
+import { DetailRow, InfoGrid } from "@/components/admin/detail-dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, Phone, MapPin, Plus, CheckCircle2, Store, AlertTriangle, FilterX } from "lucide-react"
+import { Search, MoreVertical, Phone, MapPin, Plus, CheckCircle2, Store, AlertTriangle, FilterX, Eye, Pencil, Ban } from "lucide-react"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
@@ -20,9 +22,24 @@ import { setRestaurantBlocking, updateRestaurant } from "@/services/restaurants"
 import { useToast } from "@/hooks/use-toast"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
+type RestaurantFilterValues = { status: string }
+const DEFAULT_RESTAURANT_FILTER_VALUES: RestaurantFilterValues = { status: "all" }
+const RESTAURANT_FILTER_SECTIONS: FilterSectionDef[] = [
+  {
+    key: "status",
+    label: "Trạng thái quán",
+    options: [
+      { value: "all", label: "Tất cả" },
+      { value: "active", label: "Đang mở" },
+      { value: "inactive", label: "Tạm ngưng" },
+    ],
+  },
+]
+
 export default function RestaurantsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [page, setPage] = useState(1)
+  const [filters, setFilters] = useState<RestaurantFilterValues>(DEFAULT_RESTAURANT_FILTER_VALUES)
   const pageSize = 10
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
@@ -30,6 +47,7 @@ export default function RestaurantsPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [editing, setEditing] = useState<Restaurant | null>(null)
   const [blockingId, setBlockingId] = useState<string | null>(null)
+  const [detailRestaurant, setDetailRestaurant] = useState<Restaurant | null>(null)
 
   type CreateRestaurantInput = {
     name: string
@@ -115,14 +133,15 @@ export default function RestaurantsPage() {
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
     return restaurants.filter((r) => {
-      if (!q) return true
-      return (
+      const matchesQuery = !q || (
         r.name.toLowerCase().includes(q) ||
         r.address.toLowerCase().includes(q) ||
         r.phone.toLowerCase().includes(q)
       )
+      const matchesStatus = filters.status === "all" || (filters.status === "active" ? r.isActive : !r.isActive)
+      return matchesQuery && matchesStatus
     })
-  }, [searchQuery, restaurants])
+  }, [searchQuery, filters, restaurants])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const paged = useMemo(() => {
@@ -131,25 +150,34 @@ export default function RestaurantsPage() {
     return filtered.slice(start, start + pageSize)
   }, [filtered, page, totalPages])
 
-  useEffect(() => { setPage(1) }, [searchQuery])
+  useEffect(() => { setPage(1) }, [searchQuery, filters])
   useEffect(() => { if (page > totalPages) setPage(totalPages) }, [totalPages, page])
 
   function resetFilters() {
     setSearchQuery('')
+    setFilters(DEFAULT_RESTAURANT_FILTER_VALUES)
     setPage(1)
   }
 
   return (
-    <div className="space-y-8 px-20 pt-6 pb-10 bg-background flex-1">
-      <div className="flex flex-col gap-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Tìm theo tên, địa chỉ hoặc SĐT..."
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
-              className="pl-10 h-10"
+    <div className="flex flex-1 min-h-0 flex-col gap-8 px-20 pt-6 pb-10 bg-background">
+      <div className="flex flex-1 min-h-0 flex-col gap-5">
+        <div className="shrink-0 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Tìm theo tên, địa chỉ hoặc SĐT..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
+                className="pl-10 h-10"
+              />
+            </div>
+            <AdminFilterPopover
+              sections={RESTAURANT_FILTER_SECTIONS}
+              values={filters}
+              defaultValues={DEFAULT_RESTAURANT_FILTER_VALUES}
+              onApply={setFilters}
             />
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
@@ -223,12 +251,7 @@ export default function RestaurantsPage() {
             </DialogContent>
           </Dialog>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Danh sách quán ăn</CardTitle>
-          </CardHeader>
-          <CardContent>
-          {error && !loading ? (
+        {error && !loading ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
@@ -276,9 +299,18 @@ export default function RestaurantsPage() {
               </EmptyContent>
             </Empty>
           ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
-            <TableHeader>
+        <AdminTableFrame
+          className="flex-1"
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          caption={
+            <>Hiển thị {(filtered.length === 0) ? 0 : (page - 1) * pageSize + 1}
+            –{Math.min(page * pageSize, filtered.length)} trong tổng {filtered.length}</>
+          }
+        >
+          <Table className="[&_th]:py-4 [&_td]:py-4 [&_th]:px-6 [&_td]:px-6 [&_td:last-child]:py-2">
+            <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
                 <TableHead className="w-[26%] min-w-[220px]">Tên quán ăn</TableHead>
                 <TableHead className="w-[34%] min-w-[260px]">Địa chỉ</TableHead>
@@ -290,9 +322,9 @@ export default function RestaurantsPage() {
             <TableBody>
                 {paged.map((r) => (
                   <TableRow className="hover:bg-muted/40" key={r.id}>
-                    <TableCell className="font-medium max-w-[260px]">
+                    <TableCell className="max-w-[260px]">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm sm:text-base font-semibold leading-tight truncate" title={r.name}>{r.name}</span>
+                        <span className="truncate" title={r.name}>{r.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-[360px]">
@@ -322,11 +354,16 @@ export default function RestaurantsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setEditing(r); setEditOpen(true) }}>Chỉnh sửa</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDetailRestaurant(r)}>
+                            <Eye className="h-4 w-4" />Xem chi tiết
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setEditing(r); setEditOpen(true) }}>
+                            <Pencil className="h-4 w-4" />Chỉnh sửa
+                          </DropdownMenuItem>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                {r.isActive ? <Ban className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                                 {r.isActive ? "Tạm ngưng bán" : "Mở bán lại"}
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
@@ -380,11 +417,36 @@ export default function RestaurantsPage() {
                 ))}
             </TableBody>
           </Table>
-        </div>
+        </AdminTableFrame>
           )}
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Restaurant detail dialog */}
+      <Dialog open={!!detailRestaurant} onOpenChange={(o) => { if (!o) setDetailRestaurant(null) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="items-center text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <Store className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <DialogTitle className="text-center">{detailRestaurant?.name}</DialogTitle>
+            {detailRestaurant?.isActive ? (
+              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang mở</span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Tạm ngưng</span>
+            )}
+          </DialogHeader>
+          {detailRestaurant && (
+            <InfoGrid className="grid-cols-1">
+              <DetailRow label="Địa chỉ" value={detailRestaurant.address} />
+              <DetailRow label="Số điện thoại" value={detailRestaurant.phone} />
+              <DetailRow
+                label="Ngày tạo"
+                value={detailRestaurant.createdAt ? new Date(detailRestaurant.createdAt).toLocaleDateString("vi-VN") : "-"}
+              />
+            </InfoGrid>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Restaurant Dialog */}
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setEditing(null) }}>
@@ -450,24 +512,6 @@ export default function RestaurantsPage() {
           </Form>
         </DialogContent>
       </Dialog>
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Hiển thị {(filtered.length === 0) ? 0 : (page - 1) * pageSize + 1}
-          –{Math.min(page * pageSize, filtered.length)} trong tổng {filtered.length}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Trang trước
-          </Button>
-          <div className="text-sm tabular-nums">
-            {page} / {totalPages}
-          </div>
-          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-            Trang sau
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }

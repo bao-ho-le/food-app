@@ -4,14 +4,16 @@ import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AdminTableFrame } from "@/components/admin/admin-table-frame"
+import { AdminFilterPopover, type FilterSectionDef } from "@/components/admin/filter-popover"
+import { DetailRow, DetailSection, InfoGrid } from "@/components/admin/detail-dialog"
+import { PRICE_RANGE_OPTIONS } from "@/components/dish-filters"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, RefreshCw, UtensilsCrossed, AlertTriangle, FilterX } from "lucide-react"
-import { Search, MoreVertical, Plus, CheckCircle2 } from "lucide-react"
+import { Star, UtensilsCrossed, AlertTriangle, FilterX } from "lucide-react"
+import { Search, MoreVertical, Plus, CheckCircle2, Eye, Pencil, Ban } from "lucide-react"
 import type { Dish, AdminDish, Tag, Category } from "@/types"
 import { createDish, fetchAdminDishes, setDishBlocking } from "@/services/dishes"
 import { useRestaurants } from "@/hooks/restaurants/use-restaurants"
@@ -25,19 +27,46 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
+type FoodFilterValues = { priceRange: string; status: string; sort: string }
+const DEFAULT_FOOD_FILTER_VALUES: FoodFilterValues = { priceRange: "all", status: "all", sort: "price_asc" }
+const FOOD_FILTER_SECTIONS: FilterSectionDef[] = [
+  {
+    key: "priceRange",
+    label: "Khoảng giá",
+    options: [{ value: "all", label: "Tất cả" }, ...PRICE_RANGE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))],
+  },
+  {
+    key: "status",
+    label: "Trạng thái món ăn",
+    options: [
+      { value: "all", label: "Tất cả" },
+      { value: "available", label: "Đang bán" },
+      { value: "unavailable", label: "Ngưng bán" },
+    ],
+  },
+  {
+    key: "sort",
+    label: "Sắp xếp",
+    options: [
+      { value: "price_asc", label: "Giá tiền ↑" },
+      { value: "price_desc", label: "Giá tiền ↓" },
+      { value: "rating_asc", label: "Đánh giá ↑" },
+      { value: "rating_desc", label: "Đánh giá ↓" },
+    ],
+  },
+]
+
 export default function FoodsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [page, setPage] = useState(1)
-  const [minPrice, setMinPrice] = useState<string>("")
-  const [maxPrice, setMaxPrice] = useState<string>("")
-  const [status, setStatus] = useState<"all"|"available"|"unavailable">("all")
+  const [filters, setFilters] = useState<FoodFilterValues>(DEFAULT_FOOD_FILTER_VALUES)
   const pageSize = 10
-  const [sortBy, setSortBy] = useState<"price_asc"|"price_desc"|"rating_asc"|"rating_desc">("price_asc")
   const [open, setOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [editing, setEditing] = useState<Dish | null>(null)
   const { toast } = useToast()
   const [confirmDish, setConfirmDish] = useState<Dish | null>(null)
+  const [detailDish, setDetailDish] = useState<AdminDish | null>(null)
   const [blockingId, setBlockingId] = useState<string | null>(null)
   const [restaurantSearch, setRestaurantSearch] = useState("")
   const [restaurantLimit, setRestaurantLimit] = useState(10)
@@ -203,35 +232,32 @@ export default function FoodsPage() {
   }, [reloadTick])
 
   function resetFilters() {
-    setStatus('all')
-    setMinPrice('')
-    setMaxPrice('')
+    setFilters(DEFAULT_FOOD_FILTER_VALUES)
     setSearchQuery('')
     setPage(1)
-    setSortBy('price_asc')
   }
+
+  const priceRangeByValue = useMemo(() => new Map(PRICE_RANGE_OPTIONS.map((o) => [o.value, o])), [])
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
-    const clean = (v: string) => v.replace(/\./g, "").trim()
-    const min = clean(minPrice) ? Number(clean(minPrice)) : undefined
-    const max = clean(maxPrice) ? Number(clean(maxPrice)) : undefined
+    const priceOption = filters.priceRange !== "all" ? priceRangeByValue.get(filters.priceRange) : undefined
     return dishes.filter((d) => {
       const restaurantName = "restaurantName" in d ? d.restaurantName : restaurantOptions.find(r => r.id === (d as Dish).restaurantId)?.name
       const matchesText = !q || (
         d.name.toLowerCase().includes(q) ||
         restaurantName?.toLowerCase().includes(q)
       )
-      const matchesPrice = (min === undefined || d.price >= min) && (max === undefined || d.price <= max)
-      const matchesStatus = status === "all" || (status === "available" ? d.isAvailable : !d.isAvailable)
+      const matchesPrice = !priceOption || (d.price >= priceOption.min && (priceOption.max === undefined || d.price <= priceOption.max))
+      const matchesStatus = filters.status === "all" || (filters.status === "available" ? d.isAvailable : !d.isAvailable)
       return matchesText && matchesPrice && matchesStatus
     })
-  }, [searchQuery, dishes, minPrice, maxPrice, status, restaurantOptions])
+  }, [searchQuery, dishes, filters, priceRangeByValue, restaurantOptions])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const sorted = useMemo(() => {
     const list = [...filtered]
-    switch (sortBy) {
+    switch (filters.sort) {
       case "price_desc":
         list.sort((a,b)=> b.price - a.price); break
       case "rating_asc":
@@ -242,7 +268,7 @@ export default function FoodsPage() {
         list.sort((a,b)=> a.price - b.price)
     }
     return list
-  }, [filtered, sortBy])
+  }, [filtered, filters.sort])
 
   const paged = useMemo(() => {
     const safePage = Math.min(Math.max(1, page), totalPages)
@@ -250,7 +276,7 @@ export default function FoodsPage() {
     return sorted.slice(start, start + pageSize)
   }, [sorted, page, totalPages])
 
-  useEffect(() => { setPage(1) }, [searchQuery])
+  useEffect(() => { setPage(1) }, [searchQuery, filters])
   useEffect(() => { if (page > totalPages) setPage(totalPages) }, [totalPages, page])
 
   const getRestaurantName = (dish: AdminDish | Dish) => {
@@ -259,9 +285,10 @@ export default function FoodsPage() {
   }
 
   return (
-    <div className="space-y-8 px-18 pt-6 pb-10 bg-background flex-1">
-      <div className="flex items-center justify-between gap-3 text-[15px] sm:text-base">
-        <div className="relative flex-1 sm:max-w-[22rem]">
+    <div className="flex flex-1 min-h-0 flex-col gap-8 px-18 pt-6 pb-10 bg-background">
+      <div className="shrink-0 flex items-center justify-between gap-3 text-[15px] sm:text-base">
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-64">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Tìm theo tên món hoặc quán..."
@@ -269,6 +296,13 @@ export default function FoodsPage() {
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1) }}
               className="pl-10 h-10"
             />
+          </div>
+          <AdminFilterPopover
+            sections={FOOD_FILTER_SECTIONS}
+            values={filters}
+            defaultValues={DEFAULT_FOOD_FILTER_VALUES}
+            onApply={setFilters}
+          />
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -490,52 +524,7 @@ export default function FoodsPage() {
         </Dialog>
       </div>
 
-      <div className="flex flex-wrap items-end gap-4 justify-between text-[15px] sm:text-base">
-        <div className="flex items-end gap-6">
-          <span className="text-sm font-medium pb-2">Mức giá</span>
-          <div className="flex items-center gap-2">
-            <Input placeholder="Mức giá từ" value={minPrice} onChange={(e)=>setMinPrice(e.target.value)} className="w-40" inputMode="numeric"/>
-            <span className="text-muted-foreground">-</span>
-            <Input placeholder="Mức giá đến" value={maxPrice} onChange={(e)=>setMaxPrice(e.target.value)} className="w-40" inputMode="numeric"/>
-          </div>
-          <div className="flex items-center gap-3 pl-6">
-            <span className="text-sm font-medium">Tình trạng</span>
-            <Select value={status} onValueChange={(v)=>setStatus(v as typeof status)}>
-              <SelectTrigger className="w-40 h-10">
-                <SelectValue placeholder="Chọn tình trạng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="available">Đang bán</SelectItem>
-                <SelectItem value="unavailable">Ngưng bán</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Select value={sortBy} onValueChange={(v)=>{ setSortBy(v as typeof sortBy); setPage(1) }}>
-            <SelectTrigger className="h-10 w-31 justify-between">
-              <SelectValue placeholder="Sắp xếp" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="price_desc">Giá tiền ↓</SelectItem>
-              <SelectItem value="price_asc">Giá tiền ↑</SelectItem>
-              <SelectItem value="rating_desc">Đánh giá ↓</SelectItem>
-              <SelectItem value="rating_asc">Đánh giá ↑</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" className="h-10 w-10" title="Đặt lại bộ lọc" onClick={resetFilters}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách món ăn</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadError ? (
+      {loadError ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
@@ -583,9 +572,18 @@ export default function FoodsPage() {
               </EmptyContent>
             </Empty>
           ) : (
-            <div className="overflow-x-auto rounded-lg border text-[15px] sm:text-base">
-              <Table className="[&_th]:py-4 [&_td]:py-3 [&_th]:px-6 [&_td]:px-6">
-                <TableHeader>
+            <AdminTableFrame
+              className="flex-1 text-[15px] sm:text-base"
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              caption={
+                <>Hiển thị {(filtered.length === 0) ? 0 : (page - 1) * pageSize + 1}
+                –{Math.min(page * pageSize, filtered.length)} trong tổng {filtered.length}</>
+              }
+            >
+              <Table className="[&_th]:py-4 [&_td]:py-4 [&_th]:px-6 [&_td]:px-6 [&_td:last-child]:py-2">
+                <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     <TableHead className="w-[10%] min-w-[100px]">Hình ảnh</TableHead>
                     <TableHead className="w-[26%] min-w-[200px]">Tên món</TableHead>
@@ -602,8 +600,8 @@ export default function FoodsPage() {
                       <TableCell>
                         <img src={d.image} alt={d.name} className="h-12 w-16 object-cover rounded-md border" />
                       </TableCell>
-                      <TableCell className="font-medium max-w-[260px]">
-                        <span className="text-sm sm:text-base font-semibold leading-tight truncate" title={d.name}>{d.name}</span>
+                      <TableCell className="max-w-[260px]">
+                        <span className="truncate" title={d.name}>{d.name}</span>
                       </TableCell>
                       <TableCell className="max-w-[300px]">
                         <span className="truncate" title={getRestaurantName(d)}>{getRestaurantName(d)}</span>
@@ -632,9 +630,14 @@ export default function FoodsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setEditing(d); setEditOpen(true) }}>Chỉnh sửa</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDetailDish(d)}>
+                              <Eye className="h-4 w-4" />Xem chi tiết
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditing(d); setEditOpen(true) }}>
+                              <Pencil className="h-4 w-4" />Chỉnh sửa
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setConfirmDish(d)}>
+                              {d.isAvailable ? <Ban className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                               {d.isAvailable ? "Tạm ngưng bán" : "Mở bán lại"}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -644,10 +647,55 @@ export default function FoodsPage() {
                   ))}
                 </TableBody>
               </Table>
+            </AdminTableFrame>
+          )}
+
+      {/* Dish detail dialog */}
+      <Dialog open={!!detailDish} onOpenChange={(o) => { if (!o) setDetailDish(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{detailDish?.name}</DialogTitle>
+          </DialogHeader>
+          {detailDish && (
+            <div className="space-y-4">
+              <img
+                src={detailDish.image || "/placeholder-dish.png"}
+                alt={detailDish.name}
+                className="h-48 w-full rounded-lg border object-cover"
+              />
+              <div className="space-y-1 text-center">
+                <h3 className="text-lg font-semibold">{detailDish.name}</h3>
+                <p className="text-xl font-bold text-primary">{detailDish.price.toLocaleString("vi-VN")}₫</p>
+                {detailDish.isAvailable ? (
+                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang bán</span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Ngưng bán</span>
+                )}
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                <span className="font-medium tabular-nums">{detailDish.rating.toFixed(1)}</span>
+              </div>
+              {detailDish.tags.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {detailDish.tags.map((t) => (
+                    <span key={t.id} className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 ring-1 ring-inset ring-slate-200">
+                      {t.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <DetailSection title="Thông tin quán ăn">
+                <InfoGrid className="grid-cols-1">
+                  <DetailRow label="Tên quán" value={detailDish.restaurantName} />
+                  <DetailRow label="Địa chỉ" value={detailDish.restaurantAddress || "Chưa cập nhật"} />
+                  <DetailRow label="Số điện thoại" value={detailDish.restaurantPhone || "Chưa cập nhật"} />
+                </InfoGrid>
+              </DetailSection>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm toggle availability */}
       <AlertDialog open={!!confirmDish} onOpenChange={(o)=>{ if(!o) setConfirmDish(null) }}>
@@ -899,24 +947,6 @@ export default function FoodsPage() {
           </Form>
         </DialogContent>
       </Dialog>
-
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          Hiển thị {(filtered.length === 0) ? 0 : (page - 1) * pageSize + 1}
-          –{Math.min(page * pageSize, filtered.length)} trong tổng {filtered.length}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Trang trước
-          </Button>
-          <div className="text-sm tabular-nums">
-            {page} / {totalPages}
-          </div>
-          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-            Trang sau
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }

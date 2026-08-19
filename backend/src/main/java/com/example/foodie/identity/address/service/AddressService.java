@@ -14,4 +14,5 @@ public interface AddressService {
     public List<Address> getAllAddressesByUser(Authentication authentication);
     public void deleteAddressById(Integer addressId);
     public AddressDTO updateAddress(Authentication authentication, Integer addressId, AddressDTO addressDTO);
+    public List<Address> getAllAddressesByUserId(Integer userId);
 }
