@@ -8,8 +8,8 @@ export function InfoGrid({ children, className }: { children: ReactNode; classNa
 export function DetailRow({ label, value, className }: { label: string; value: ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-medium break-words">{value}</p>
+      <p className="text-sm font-semibold">{label}</p>
+      <p className="text-sm text-muted-foreground break-words">{value}</p>
     </div>
   )
 }

@@ -23,6 +23,7 @@ type OrderItemResponse = {
 const STATUS_MAP: Record<string, OrderStatus> = {
   pending: "pending",
   preparing: "preparing",
+  delivering: "delivering",
   delivered: "completed",
   cancelled: "cancelled",
 }
@@ -72,6 +73,16 @@ export async function fetchOrderItems(orderId: string | number): Promise<OrderIt
     imageUrl: item.imageUrl,
     restaurantName: item.restaurantName,
   }))
+}
+
+export async function cancelOrder(orderId: string | number): Promise<void> {
+  const headers = getAuthHeaders()
+  await apiClient.patch(`/orders/user/${orderId}/cancel`, undefined, { headers })
+}
+
+export async function confirmOrderReceived(orderId: string | number): Promise<void> {
+  const headers = getAuthHeaders()
+  await apiClient.patch(`/orders/user/${orderId}/confirm-received`, undefined, { headers })
 }
 
 export async function submitOrderItemReview(

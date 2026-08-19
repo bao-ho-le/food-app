@@ -10,8 +10,10 @@ import { DetailRow, InfoGrid } from "@/components/admin/detail-dialog"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, MoreVertical, CheckCircle2, Package, AlertTriangle, FilterX, Eye, Ban } from "lucide-react"
+import { Search, MoreVertical, CheckCircle2, Package, AlertTriangle, FilterX, Eye, Ban, Truck } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +31,7 @@ import { fetchAdminOrderItems, fetchAdminOrders, updateOrderStatus } from "@/ser
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   PENDING: "Chờ xử lý",
   PREPARING: "Đang chuẩn bị",
+  DELIVERING: "Đang giao hàng",
   DELIVERED: "Đã giao",
   CANCELLED: "Đã huỷ",
 }
@@ -36,6 +39,7 @@ const STATUS_LABEL: Record<AdminOrderStatus, string> = {
 const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
   PENDING: "bg-amber-100 text-amber-700 ring-amber-200",
   PREPARING: "bg-blue-100 text-blue-700 ring-blue-200",
+  DELIVERING: "bg-indigo-100 text-indigo-700 ring-indigo-200",
   DELIVERED: "bg-emerald-100 text-emerald-700 ring-emerald-200",
   CANCELLED: "bg-rose-100 text-rose-700 ring-rose-200",
 }
@@ -50,6 +54,7 @@ const ORDER_FILTER_SECTIONS: FilterSectionDef[] = [
       { value: "all", label: "Tất cả" },
       { value: "PENDING", label: STATUS_LABEL.PENDING },
       { value: "PREPARING", label: STATUS_LABEL.PREPARING },
+      { value: "DELIVERING", label: STATUS_LABEL.DELIVERING },
       { value: "DELIVERED", label: STATUS_LABEL.DELIVERED },
       { value: "CANCELLED", label: STATUS_LABEL.CANCELLED },
     ],
@@ -236,11 +241,7 @@ export default function AdminOrdersPage() {
             </EmptyContent>
           </Empty>
         ) : isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 w-full" />
-            ))}
-          </div>
+          null
         ) : orders.length === 0 ? (
           <Empty>
             <EmptyHeader>
@@ -288,8 +289,8 @@ export default function AdminOrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-              {paged.map((o) => (
-                <TableRow className="hover:bg-muted/40" key={o.id}>
+              {paged.map((o, idx) => (
+                <TableRow className={cn("hover:bg-muted/40", idx === paged.length - 1 && "!border-b")} key={o.id}>
                   <TableCell className="font-medium">#{o.id}</TableCell>
                   <TableCell className="max-w-[200px]">
                     <span className="truncate" title={o.customerName}>{o.customerName}</span>
@@ -327,7 +328,7 @@ export default function AdminOrdersPage() {
                                 })
                               }
                             >
-                              <CheckCircle2 className="h-4 w-4" />Xác nhận đơn (→ Đang chuẩn bị)
+                              <CheckCircle2 className="h-4 w-4" />Xác nhận đơn
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
@@ -344,6 +345,34 @@ export default function AdminOrdersPage() {
                           </>
                         )}
                         {o.status === "PREPARING" && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setPendingAction({
+                                  order: o,
+                                  nextStatus: "DELIVERING",
+                                  title: "Bắt đầu giao hàng?",
+                                  description: `Đơn #${o.id} sẽ chuyển sang trạng thái "Đang giao hàng".`,
+                                })
+                              }
+                            >
+                              <Truck className="h-4 w-4" />Bắt đầu giao hàng
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setPendingAction({
+                                  order: o,
+                                  nextStatus: "CANCELLED",
+                                  title: "Huỷ đơn hàng?",
+                                  description: `Đơn #${o.id} sẽ bị huỷ và không thể hoàn tác.`,
+                                })
+                              }
+                            >
+                              <Ban className="h-4 w-4" />Huỷ đơn
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {o.status === "DELIVERING" && (
                           <>
                             <DropdownMenuItem
                               onClick={() =>
@@ -392,6 +421,7 @@ export default function AdminOrdersPage() {
               </span>
             )}
           </DialogHeader>
+          <Separator className="my-4" />
           {detailOrder && (
             <InfoGrid className="grid-cols-1 sm:grid-cols-2">
               <DetailRow label="Khách hàng" value={detailOrder.customerName} />

@@ -5,9 +5,20 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import type { Order, OrderItem, OrderStatus, Dish } from "@/types"
 import { mockRestaurants, mockDishes } from "@/lib/mock-data"
-import { fetchUserOrders, fetchOrderItems, submitOrderItemReview } from "@/services/orders"
+import { fetchUserOrders, fetchOrderItems, submitOrderItemReview, cancelOrder, confirmOrderReceived } from "@/services/orders"
 import { fetchUserProfile } from "@/services/users"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -72,6 +83,7 @@ export default function OrdersPage() {
     dishId: string
     orderItemId: string
   } | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const ordersPerPage = 5
   const totalPages = Math.ceil(orders.length / ordersPerPage)
@@ -183,6 +195,47 @@ export default function OrdersPage() {
       return
     } finally {
       setReviewDialogOpen(false)
+    }
+  }
+
+  const updateOrderStatus = (orderId: string, status: OrderStatus) => {
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)))
+    setSelectedOrder((prev) => (prev && prev.id === orderId ? { ...prev, status } : prev))
+  }
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return
+    setActionLoading(true)
+    try {
+      await cancelOrder(selectedOrder.id)
+      updateOrderStatus(selectedOrder.id, "cancelled")
+      toast({ title: "Đã huỷ đơn hàng" })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Không thể huỷ đơn hàng",
+        description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
+      })
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleConfirmReceived = async () => {
+    if (!selectedOrder) return
+    setActionLoading(true)
+    try {
+      await confirmOrderReceived(selectedOrder.id)
+      updateOrderStatus(selectedOrder.id, "completed")
+      toast({ title: "Đã xác nhận nhận hàng" })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Không thể xác nhận nhận hàng",
+        description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
+      })
+    } finally {
+      setActionLoading(false)
     }
   }
 
@@ -326,6 +379,40 @@ export default function OrdersPage() {
                       <p className="font-medium">{selectedOrder.deliveryAddress}</p>
                     </div>
                   </CardContent>
+                  {(selectedOrder.status === "pending" ||
+                    selectedOrder.status === "preparing" ||
+                    selectedOrder.status === "delivering") && (
+                    <CardFooter className="gap-2 border-t pt-4">
+                      {selectedOrder.status === "delivering" && (
+                        <Button onClick={handleConfirmReceived} disabled={actionLoading}>
+                          <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                          Xác nhận đã nhận hàng
+                        </Button>
+                      )}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" disabled={actionLoading}>
+                            <XCircle className="mr-1.5 h-4 w-4" />
+                            Huỷ đơn hàng
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Huỷ đơn hàng?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Đơn #{selectedOrder.id.slice(0, 8)} sẽ bị huỷ và không thể hoàn tác.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Đóng</AlertDialogCancel>
+                            <AlertDialogAction disabled={actionLoading} onClick={handleCancelOrder}>
+                              Xác nhận huỷ
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </CardFooter>
+                  )}
                 </Card>
 
                 {/* Chi tiết sản phẩm */}

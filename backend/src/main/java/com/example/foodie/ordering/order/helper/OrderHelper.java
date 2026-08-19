@@ -20,7 +20,8 @@ public class OrderHelper {
     public void validateStatusTransition(Status current, Status next) {
         boolean valid = switch (current) {
             case PENDING -> next == Status.PREPARING || next == Status.CANCELLED;
-            case PREPARING -> next == Status.DELIVERED || next == Status.CANCELLED;
+            case PREPARING -> next == Status.DELIVERING || next == Status.CANCELLED;
+            case DELIVERING -> next == Status.DELIVERED || next == Status.CANCELLED;
             default -> false; // DELIVERED, CANCELLED là trạng thái cuối
         };
         if (!valid) {

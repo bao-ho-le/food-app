@@ -147,7 +147,7 @@ export interface TopSelling {
 }
 
 // Admin Order Types
-export type AdminOrderStatus = "PENDING" | "PREPARING" | "DELIVERED" | "CANCELLED"
+export type AdminOrderStatus = "PENDING" | "PREPARING" | "DELIVERING" | "DELIVERED" | "CANCELLED"
 
 export interface AdminOrder {
   id: string

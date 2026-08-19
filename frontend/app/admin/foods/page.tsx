@@ -26,6 +26,7 @@ import { useForm } from "react-hook-form"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { cn } from "@/lib/utils"
 
 type FoodFilterValues = { priceRange: string; status: string; sort: string }
 const DEFAULT_FOOD_FILTER_VALUES: FoodFilterValues = { priceRange: "all", status: "all", sort: "price_asc" }
@@ -538,11 +539,7 @@ export default function FoodsPage() {
               </EmptyContent>
             </Empty>
           ) : isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
+            null
           ) : dishes.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -595,8 +592,8 @@ export default function FoodsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paged.map((d) => (
-                    <TableRow className="hover:bg-muted/40" key={d.id}>
+                  {paged.map((d, idx) => (
+                    <TableRow className={cn("hover:bg-muted/40", idx === paged.length - 1 && "!border-b")} key={d.id}>
                       <TableCell>
                         <img src={d.image} alt={d.name} className="h-12 w-16 object-cover rounded-md border" />
                       </TableCell>
@@ -652,39 +649,43 @@ export default function FoodsPage() {
 
       {/* Dish detail dialog */}
       <Dialog open={!!detailDish} onOpenChange={(o) => { if (!o) setDetailDish(null) }}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader className="sr-only">
             <DialogTitle>{detailDish?.name}</DialogTitle>
           </DialogHeader>
           {detailDish && (
-            <div className="space-y-4">
-              <img
-                src={detailDish.image || "/placeholder-dish.png"}
-                alt={detailDish.name}
-                className="h-48 w-full rounded-lg border object-cover"
-              />
-              <div className="space-y-1 text-center">
-                <h3 className="text-lg font-semibold">{detailDish.name}</h3>
-                <p className="text-xl font-bold text-primary">{detailDish.price.toLocaleString("vi-VN")}₫</p>
-                {detailDish.isAvailable ? (
-                  <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang bán</span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Ngưng bán</span>
-                )}
-              </div>
-              <div className="flex items-center justify-center gap-1">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                <span className="font-medium tabular-nums">{detailDish.rating.toFixed(1)}</span>
-              </div>
-              {detailDish.tags.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2">
-                  {detailDish.tags.map((t) => (
-                    <span key={t.id} className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 ring-1 ring-inset ring-slate-200">
-                      {t.name}
-                    </span>
-                  ))}
+            <>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                <img
+                  src={detailDish.image || "/placeholder-dish.png"}
+                  alt={detailDish.name}
+                  className="h-40 w-40 shrink-0 self-center rounded-lg border object-cover sm:self-start"
+                />
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold">{detailDish.name}</h3>
+                    <p className="text-xl font-bold text-primary">{detailDish.price.toLocaleString("vi-VN")}₫</p>
+                    {detailDish.isAvailable ? (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">Đang bán</span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Ngưng bán</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                    <span className="font-medium tabular-nums">{detailDish.rating.toFixed(1)}</span>
+                  </div>
+                  {detailDish.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {detailDish.tags.map((t) => (
+                        <span key={t.id} className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 ring-1 ring-inset ring-slate-200">
+                          {t.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
               <DetailSection title="Thông tin quán ăn">
                 <InfoGrid className="grid-cols-1">
                   <DetailRow label="Tên quán" value={detailDish.restaurantName} />
@@ -692,7 +693,7 @@ export default function FoodsPage() {
                   <DetailRow label="Số điện thoại" value={detailDish.restaurantPhone || "Chưa cập nhật"} />
                 </InfoGrid>
               </DetailSection>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

@@ -90,6 +90,7 @@ public enum ErrorCode {
     ORDER_DISH_NOT_FOUND(HttpStatus.NOT_FOUND, "Order dish không tồn tại"),
     ORDER_STATUS_REQUIRED(HttpStatus.BAD_REQUEST, "Trạng thái đơn hàng không được để trống"),
     ORDER_INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "Không thể chuyển sang trạng thái này"),
+    ORDER_NOT_OWNER(HttpStatus.FORBIDDEN, "Bạn không có quyền thao tác trên đơn hàng này"),
 
     // ===================== Ordering.UserDish =====================
     USERDISH_ID_REQUIRED(HttpStatus.BAD_REQUEST, "Id món trong giỏ không được để trống"),

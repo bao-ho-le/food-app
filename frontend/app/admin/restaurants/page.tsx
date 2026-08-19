@@ -16,6 +16,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form"
 import { Textarea } from "@/components/ui/textarea"
 import type { Restaurant } from "@/types"
+import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 import { useRestaurants } from "@/hooks/restaurants/use-restaurants"
 import { useCreateRestaurant } from "@/hooks/restaurants/use-create-restaurant"
 import { setRestaurantBlocking, updateRestaurant } from "@/services/restaurants"
@@ -265,11 +267,7 @@ export default function RestaurantsPage() {
               </EmptyContent>
             </Empty>
           ) : loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
+            null
           ) : restaurants.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -320,8 +318,8 @@ export default function RestaurantsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-                {paged.map((r) => (
-                  <TableRow className="hover:bg-muted/40" key={r.id}>
+                {paged.map((r, idx) => (
+                  <TableRow className={cn("hover:bg-muted/40", idx === paged.length - 1 && "!border-b")} key={r.id}>
                     <TableCell className="max-w-[260px]">
                       <div className="flex items-center gap-3">
                         <span className="truncate" title={r.name}>{r.name}</span>
@@ -435,6 +433,7 @@ export default function RestaurantsPage() {
               <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200">Tạm ngưng</span>
             )}
           </DialogHeader>
+          <Separator className="my-4" />
           {detailRestaurant && (
             <InfoGrid className="grid-cols-1">
               <DetailRow label="Địa chỉ" value={detailRestaurant.address} />

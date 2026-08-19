@@ -13,11 +13,13 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
 import {
   Search, MoreVertical, CheckCircle2, Users as UsersIcon, AlertTriangle, FilterX,
   Eye, ShieldCheck, ShieldOff, Lock, Unlock, MapPin,
 } from "lucide-react"
 import type { Address, User } from "@/types"
+import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useAdminUsers } from "@/hooks/users/use-admin-users"
 import { fetchAdminUserAddresses, setUserBlocking } from "@/services/users"
@@ -254,11 +256,7 @@ export default function UsersPage() {
               </EmptyContent>
             </Empty>
           ) : loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
+            null
           ) : users.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -305,8 +303,8 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                  {pagedUsers.map((user) => (
-                  <TableRow className="hover:bg-muted/40" key={user.id}>
+                  {pagedUsers.map((user, idx) => (
+                  <TableRow className={cn("hover:bg-muted/40", idx === pagedUsers.length - 1 && "!border-b")} key={user.id}>
                     <TableCell className="max-w-[240px]">
                       <div className="flex items-center gap-3">
                         <span className="truncate" title={user.name}>{user.name}</span>
@@ -369,11 +367,14 @@ export default function UsersPage() {
               <AvatarImage src={detailUser?.avatarUrl} alt={detailUser?.name} />
               <AvatarFallback className="text-lg">{detailUser?.name?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
             </Avatar>
-            <DialogTitle className="text-center">{detailUser?.name}</DialogTitle>
-            <Badge className={detailUser?.role === "admin" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
-              {detailUser?.role === "admin" ? "Admin" : "User"}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <DialogTitle>{detailUser?.name}</DialogTitle>
+              <Badge className={detailUser?.role === "admin" ? "bg-blue-100 text-blue-700 hover:bg-blue-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
+                {detailUser?.role === "admin" ? "Admin" : "User"}
+              </Badge>
+            </div>
           </DialogHeader>
+          <Separator className="my-4" />
           <div className="space-y-4">
             <InfoGrid>
               <DetailRow label="Email" value={detailUser?.email || "-"} />

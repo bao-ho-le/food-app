@@ -20,6 +20,7 @@ import { fetchAdminDishes } from "@/services/dishes"
 const STATUS_LABEL: Record<AdminOrderStatus, string> = {
   PENDING: "Chờ xử lý",
   PREPARING: "Đang chuẩn bị",
+  DELIVERING: "Đang giao hàng",
   DELIVERED: "Đã giao",
   CANCELLED: "Đã huỷ",
 }
@@ -27,6 +28,7 @@ const STATUS_LABEL: Record<AdminOrderStatus, string> = {
 const STATUS_BADGE_CLASS: Record<AdminOrderStatus, string> = {
   PENDING: "bg-amber-100 text-amber-700 ring-amber-200",
   PREPARING: "bg-blue-100 text-blue-700 ring-blue-200",
+  DELIVERING: "bg-indigo-100 text-indigo-700 ring-indigo-200",
   DELIVERED: "bg-emerald-100 text-emerald-700 ring-emerald-200",
   CANCELLED: "bg-rose-100 text-rose-700 ring-rose-200",
 }
@@ -105,17 +107,7 @@ export default function DashboardPage() {
   )
 
   if (isLoading) {
-    return (
-      <div className="flex-1 space-y-10 bg-background p-4 md:px-18 md:py-10">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
-          ))}
-        </div>
-        <Skeleton className="h-[380px] rounded-xl" />
-      </div>
-    )
+    return null
   }
 
   if (loadError) {

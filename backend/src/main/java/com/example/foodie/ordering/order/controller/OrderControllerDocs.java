@@ -44,4 +44,20 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "400", description = "Địa chỉ không hợp lệ hoặc giỏ hàng trống")
     })
     ResponseEntity<Order> createOrder(Authentication authentication, @Valid @RequestBody OrderDTO orderDTO);
+
+    @Operation(summary = "Huỷ đơn hàng của tôi", description = "Cho phép khách hàng huỷ đơn hàng của chính mình, nếu trạng thái hiện tại cho phép huỷ.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Huỷ đơn hàng thành công"),
+            @ApiResponse(responseCode = "403", description = "Không phải chủ đơn hàng"),
+            @ApiResponse(responseCode = "409", description = "Không thể huỷ ở trạng thái hiện tại")
+    })
+    ResponseEntity<Order> cancelMyOrder(Authentication authentication, @Parameter(description = "ID của đơn hàng") @PathVariable Integer id);
+
+    @Operation(summary = "Xác nhận đã nhận hàng", description = "Cho phép khách hàng xác nhận đã nhận đơn hàng đang giao của chính mình.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Xác nhận thành công"),
+            @ApiResponse(responseCode = "403", description = "Không phải chủ đơn hàng"),
+            @ApiResponse(responseCode = "409", description = "Đơn hàng chưa ở trạng thái đang giao")
+    })
+    ResponseEntity<Order> confirmMyOrderReceived(Authentication authentication, @Parameter(description = "ID của đơn hàng") @PathVariable Integer id);
 }

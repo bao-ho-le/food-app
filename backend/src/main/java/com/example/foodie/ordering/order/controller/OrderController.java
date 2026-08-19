@@ -39,4 +39,16 @@ public class OrderController implements OrderControllerDocs {
                 .status(HttpStatus.CREATED)
                 .body(orderService.createOrder(authentication, orderDTO.getAddressId()));
     }
+
+    @Override
+    @PatchMapping("/user/{id}/cancel")
+    public ResponseEntity<Order> cancelMyOrder(Authentication authentication, @PathVariable Integer id) {
+        return ResponseEntity.ok(orderService.cancelOwnOrder(authentication, id));
+    }
+
+    @Override
+    @PatchMapping("/user/{id}/confirm-received")
+    public ResponseEntity<Order> confirmMyOrderReceived(Authentication authentication, @PathVariable Integer id) {
+        return ResponseEntity.ok(orderService.confirmOwnOrderReceived(authentication, id));
+    }
 }

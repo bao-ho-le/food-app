@@ -140,6 +140,33 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(order);
     }
 
+    @Override
+    public Order cancelOwnOrder(Authentication authentication, Integer orderId) {
+        Order order = getOwnOrderOrThrow(authentication, orderId);
+        orderHelper.validateStatusTransition(order.getStatus(), Status.CANCELLED);
+        order.setStatus(Status.CANCELLED);
+        return orderRepository.save(order);
+    }
+
+    @Override
+    public Order confirmOwnOrderReceived(Authentication authentication, Integer orderId) {
+        Order order = getOwnOrderOrThrow(authentication, orderId);
+        orderHelper.validateStatusTransition(order.getStatus(), Status.DELIVERED);
+        order.setStatus(Status.DELIVERED);
+        return orderRepository.save(order);
+    }
+
+    private Order getOwnOrderOrThrow(Authentication authentication, Integer orderId) {
+        orderHelper.validateOrderId(orderId);
+        User user = userHelper.getUserFromAuthentication(authentication);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_NOT_FOUND));
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new OrderingException(ErrorCode.ORDER_NOT_OWNER);
+        }
+        return order;
+    }
+
     // Helper
 
     private List<OrderDish> buildOrderDishes(List<UserDish> userDishes, Order order) {
