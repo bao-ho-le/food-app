@@ -1,4 +1,4 @@
-package com.example.foodie.security;
+package com.example.foodie.auth.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -1,4 +1,4 @@
-package com.example.foodie.security;
+package com.example.foodie.auth.security;
 
 import com.example.foodie.identity.user.entity.User;
 import lombok.AllArgsConstructor;

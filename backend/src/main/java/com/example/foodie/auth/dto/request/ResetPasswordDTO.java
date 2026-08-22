@@ -1,4 +1,4 @@
-package com.example.foodie.identity.user.dto.request;
+package com.example.foodie.auth.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

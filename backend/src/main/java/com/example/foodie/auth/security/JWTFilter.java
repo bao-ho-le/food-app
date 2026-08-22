@@ -1,4 +1,4 @@
-package com.example.foodie.security;
+package com.example.foodie.auth.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

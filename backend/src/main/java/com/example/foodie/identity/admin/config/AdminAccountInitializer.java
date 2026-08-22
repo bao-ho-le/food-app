@@ -1,9 +1,9 @@
 package com.example.foodie.identity.admin.config;
 
-import com.example.foodie.identity.user.dto.request.AdminDTO;
+import com.example.foodie.auth.dto.request.AdminDTO;
+import com.example.foodie.auth.service.AuthService;
 import com.example.foodie.identity.user.enums.Gender;
 import com.example.foodie.identity.user.repository.UserRepository;
-import com.example.foodie.identity.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Order(2)
 @RequiredArgsConstructor
 public class AdminAccountInitializer implements CommandLineRunner {
-    private final UserService userService;
+    private final AuthService authService;
     private final UserRepository userRepository;
 
     @Value("${app.admin.email}") private String adminEmail;
@@ -33,6 +33,6 @@ public class AdminAccountInitializer implements CommandLineRunner {
         adminDTO.setPhoneNumber(adminPhoneNumber);
         adminDTO.setGender(Gender.OTHER);
 
-        userService.registerAdmin(adminDTO);
+        authService.registerAdmin(adminDTO);
     }
 }

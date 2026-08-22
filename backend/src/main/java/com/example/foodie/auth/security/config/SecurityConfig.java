@@ -1,7 +1,7 @@
-package com.example.foodie.security.config;
+package com.example.foodie.auth.security.config;
 
-import com.example.foodie.security.JWTFilter;
-import com.example.foodie.security.CustomUserDetailsService;
+import com.example.foodie.auth.security.JWTFilter;
+import com.example.foodie.auth.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

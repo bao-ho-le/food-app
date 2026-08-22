@@ -1,4 +1,4 @@
-package com.example.foodie.identity.user.dto.request;
+package com.example.foodie.auth.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

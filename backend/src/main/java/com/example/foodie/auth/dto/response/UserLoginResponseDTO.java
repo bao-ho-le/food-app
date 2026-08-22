@@ -1,7 +1,6 @@
-package com.example.foodie.identity.user.dto.response;
+package com.example.foodie.auth.dto.response;
 
 import com.example.foodie.identity.user.enums.RoleName;
-import com.example.foodie.identity.user.entity.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

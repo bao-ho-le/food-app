@@ -1,4 +1,4 @@
-package com.example.foodie.identity.user.dto.request;
+package com.example.foodie.auth.dto.request;
 
 import com.example.foodie.identity.user.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonFormat;

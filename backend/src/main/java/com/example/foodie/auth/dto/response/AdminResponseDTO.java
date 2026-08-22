@@ -1,4 +1,4 @@
-package com.example.foodie.identity.user.dto.response;
+package com.example.foodie.auth.dto.response;
 
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
