@@ -84,7 +84,7 @@ export default function FoodPage() {
           toast({
             variant: "destructive",
             title: "Không thể cập nhật giỏ hàng",
-            description: "Vui lòng thử lại sau.",
+            description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
           })
         }
       }),
@@ -111,7 +111,7 @@ export default function FoodPage() {
           toast({
             variant: "destructive",
             title: "Không thể thêm vào giỏ hàng",
-            description: "Vui lòng thử lại sau.",
+            description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
           })
         }
       }, 1000)
@@ -150,6 +150,7 @@ export default function FoodPage() {
             rating: typeof dish.rating === "number" ? dish.rating : 0,
             totalReviews: dish.totalReviews ?? 0,
             isAvailable: Boolean(dish.available ?? true),
+            stockQuantity: Number(dish.stockQuantity ?? 0),
             spicyLevel: "none",
             tags: (dish.tags ?? []).map((tag) => tag.name.trim()),
           }
@@ -438,10 +439,18 @@ export default function FoodPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex items-center justify-between border-t border-border bg-muted/20 p-4">
-                    <span className="text-xl font-semibold text-primary">{dish.price.toLocaleString("vi-VN")}đ</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xl font-semibold text-primary">{dish.price.toLocaleString("vi-VN")}đ</span>
+                      {dish.stockQuantity > 0 ? (
+                        <span className="text-xs text-muted-foreground">Còn {dish.stockQuantity} phần</span>
+                      ) : (
+                        <span className="text-xs font-medium text-rose-600">Hết hàng</span>
+                      )}
+                    </div>
                     <Button
                       size="sm"
-                      className="min-w-[110px] rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_8px_16px_rgba(34,197,94,0.2)] hover:bg-primary/90"
+                      disabled={dish.stockQuantity <= 0}
+                      className="min-w-[110px] rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[0_8px_16px_rgba(34,197,94,0.2)] hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                       onClick={(e) => { e.stopPropagation(); handleAddToCart(dish); }}
                     >
                       <Plus className="mr-1 h-4 w-4" />

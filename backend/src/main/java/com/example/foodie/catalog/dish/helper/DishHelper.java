@@ -45,4 +45,13 @@ public class DishHelper {
             throw new CatalogException(ErrorCode.DISH_BLOCK_TYPE_INVALID);
         }
     }
+
+    public void validateStockTopUpQuantity(Integer quantity) {
+        if (quantity == null) {
+            throw new CatalogException(ErrorCode.DISH_STOCK_QUANTITY_REQUIRED);
+        }
+        if (quantity <= 0) {
+            throw new CatalogException(ErrorCode.DISH_STOCK_QUANTITY_INVALID);
+        }
+    }
 }

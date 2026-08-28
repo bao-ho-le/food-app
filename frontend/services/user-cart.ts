@@ -11,6 +11,7 @@ type UserDishResponse = {
     price: number
     url?: string
     available?: boolean
+    stockQuantity?: number
     restaurant?: {
       id?: number | string
       name?: string
@@ -41,6 +42,7 @@ function mapDish(apiDish: UserDishResponse["dish"]): Dish {
     rating: 0,
     totalReviews: 0,
     isAvailable: Boolean(apiDish.available ?? true),
+    stockQuantity: Number(apiDish.stockQuantity ?? 0),
     spicyLevel: "none",
     tags: [],
   }

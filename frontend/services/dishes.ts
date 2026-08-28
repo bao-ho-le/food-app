@@ -10,6 +10,7 @@ export type DishApiResponse = {
   rating?: number
   totalReviews?: number
   available?: boolean
+  stockQuantity?: number
   tags?: {
     id?: number | string
     name: string
@@ -41,6 +42,7 @@ function mapAdminDish(dish: DishApiResponse): AdminDish {
     rating: typeof dish.rating === "number" ? dish.rating : 0,
     image: dish.url || "",
     isAvailable: Boolean(dish.available),
+    stockQuantity: Number(dish.stockQuantity ?? 0),
     restaurantName: dish.restaurant?.name ?? "Không rõ",
     tags: (dish.tags ?? []).map((t) => ({
       id: String(t.id ?? t.name),
@@ -86,4 +88,10 @@ export async function createDish(input: CreateDishInput): Promise<AdminDish> {
 export async function setDishBlocking(id: number | string, type: 0 | 1): Promise<string> {
   const headers = getAuthHeaders()
   return apiClient.post<string>(`/admin/dishes/blocking/${id}/${type}`, undefined, { headers })
+}
+
+export async function restockDish(id: number | string, quantity: number): Promise<AdminDish> {
+  const headers = getAuthHeaders()
+  const data = await apiClient.post<DishApiResponse>(`/admin/dishes/${id}/stock`, { quantity }, { headers })
+  return mapAdminDish(data)
 }

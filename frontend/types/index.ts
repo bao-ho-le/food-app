@@ -54,6 +54,7 @@ export interface Dish {
   rating: number
   totalReviews: number
   isAvailable: boolean
+  stockQuantity: number
   spicyLevel: "none" | "mild" | "medium" | "hot" | "extra-hot"
   tags: string[]
 }
@@ -65,6 +66,7 @@ export interface AdminDish {
   rating: number
   image: string
   isAvailable: boolean
+  stockQuantity: number
   restaurantName: string
   tags: { id: string; name: string; categoryName?: string }[]
   restaurantAddress?: string

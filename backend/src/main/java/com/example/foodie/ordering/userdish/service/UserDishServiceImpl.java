@@ -60,9 +60,16 @@ public class UserDishServiceImpl implements UserDishService {
         Optional<UserDish> existingUserDish =
                 userDishRepository.findByUser_IdAndDish_Id(user.getId(), userDishDTO.getDishId());
 
+        int requestedTotalQuantity = userDishDTO.getQuantity()
+                + existingUserDish.map(UserDish::getQuantity).orElse(0);
+
+        if (dish.getStockQuantity() < requestedTotalQuantity) {
+            throw new CatalogException(ErrorCode.DISH_OUT_OF_STOCK);
+        }
+
         if (existingUserDish.isPresent()) {
             UserDish userDish = existingUserDish.get();
-            userDish.setQuantity(userDish.getQuantity() + userDishDTO.getQuantity());
+            userDish.setQuantity(requestedTotalQuantity);
             userDishRepository.save(userDish);
         } else {
             userDishRepository.save(UserDish.builder()
@@ -100,6 +107,10 @@ public class UserDishServiceImpl implements UserDishService {
         if (quantity <= 0){
             userDishRepository.deleteByIdAndUser_Id(userDishId, user.getId());
             return;
+        }
+
+        if (userDish.getDish().getStockQuantity() < quantity) {
+            throw new CatalogException(ErrorCode.DISH_OUT_OF_STOCK);
         }
 
         userDish.setQuantity(quantity);

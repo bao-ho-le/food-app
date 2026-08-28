@@ -13,9 +13,9 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Star, UtensilsCrossed, AlertTriangle, FilterX } from "lucide-react"
-import { Search, MoreVertical, Plus, CheckCircle2, Eye, Pencil, Ban } from "lucide-react"
+import { Search, MoreVertical, Plus, CheckCircle2, Eye, Pencil, Ban, PackagePlus } from "lucide-react"
 import type { Dish, AdminDish, Tag, Category } from "@/types"
-import { createDish, fetchAdminDishes, setDishBlocking } from "@/services/dishes"
+import { createDish, fetchAdminDishes, setDishBlocking, restockDish } from "@/services/dishes"
 import { useRestaurants } from "@/hooks/restaurants/use-restaurants"
 import { fetchAllTags } from "@/services/tags"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -69,6 +69,9 @@ export default function FoodsPage() {
   const [confirmDish, setConfirmDish] = useState<Dish | null>(null)
   const [detailDish, setDetailDish] = useState<AdminDish | null>(null)
   const [blockingId, setBlockingId] = useState<string | null>(null)
+  const [restockTarget, setRestockTarget] = useState<AdminDish | null>(null)
+  const [restockAmount, setRestockAmount] = useState("")
+  const [restockSubmitting, setRestockSubmitting] = useState(false)
   const [restaurantSearch, setRestaurantSearch] = useState("")
   const [restaurantLimit, setRestaurantLimit] = useState(10)
   const [restaurantPopoverOpen, setRestaurantPopoverOpen] = useState(false)
@@ -586,6 +589,7 @@ export default function FoodsPage() {
                     <TableHead className="w-[26%] min-w-[200px]">Tên món</TableHead>
                     <TableHead className="w-[26%] min-w-[220px]">Tên quán</TableHead>
                     <TableHead className="w-[12%] min-w-[120px]">Giá tiền</TableHead>
+                    <TableHead className="w-[10%]">Tồn kho</TableHead>
                     <TableHead className="w-[10%]">Đánh giá</TableHead>
                     <TableHead className="w-[12%]">Tình trạng</TableHead>
                     <TableHead className="w-[8%] text-right">Thao tác</TableHead>
@@ -605,6 +609,11 @@ export default function FoodsPage() {
                       </TableCell>
                       <TableCell>
                         {d.price.toLocaleString("vi-VN")}₫
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn("tabular-nums font-medium", d.stockQuantity <= 0 && "text-rose-600")}>
+                          {d.stockQuantity}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="inline-flex items-center gap-1">
@@ -629,6 +638,9 @@ export default function FoodsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setDetailDish(d)}>
                               <Eye className="h-4 w-4" />Xem chi tiết
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setRestockTarget(d); setRestockAmount("") }}>
+                              <PackagePlus className="h-4 w-4" />Nhập kho
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => { setEditing(d); setEditOpen(true) }}>
                               <Pencil className="h-4 w-4" />Chỉnh sửa
@@ -686,6 +698,11 @@ export default function FoodsPage() {
                   )}
                 </div>
               </div>
+              <DetailSection title="Tồn kho">
+                <InfoGrid className="grid-cols-1">
+                  <DetailRow label="Số lượng còn lại" value={String(detailDish.stockQuantity)} />
+                </InfoGrid>
+              </DetailSection>
               <DetailSection title="Thông tin quán ăn">
                 <InfoGrid className="grid-cols-1">
                   <DetailRow label="Tên quán" value={detailDish.restaurantName} />
@@ -743,6 +760,58 @@ export default function FoodsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Restock dialog */}
+      <Dialog open={!!restockTarget} onOpenChange={(o) => { if (!o) { setRestockTarget(null); setRestockAmount("") } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nhập kho: {restockTarget?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Tồn kho hiện tại: <span className="font-medium text-foreground">{restockTarget?.stockQuantity}</span>
+            </p>
+            <Input
+              type="number"
+              min="1"
+              placeholder="Số lượng nhập thêm"
+              value={restockAmount}
+              onChange={(e) => setRestockAmount(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRestockTarget(null); setRestockAmount("") }}>Hủy</Button>
+            <Button
+              disabled={restockSubmitting || !restockTarget || !Number.isInteger(Number(restockAmount)) || Number(restockAmount) <= 0}
+              onClick={async () => {
+                if (!restockTarget) return
+                const amount = Number(restockAmount)
+                setRestockSubmitting(true)
+                try {
+                  const updated = await restockDish(normalizeId(restockTarget.id), amount)
+                  setDishes((prev) => prev.map((dish) => dish.id === restockTarget.id ? { ...dish, stockQuantity: updated.stockQuantity } : dish))
+                  toast({
+                    title: (
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        <span className="font-medium">Đã nhập thêm {amount} phần vào kho</span>
+                      </div>
+                    ),
+                  })
+                  setRestockTarget(null)
+                  setRestockAmount("")
+                } catch (e) {
+                  toast({ variant: "destructive", title: "Nhập kho thất bại", description: e instanceof Error ? e.message : "Vui lòng thử lại sau." })
+                } finally {
+                  setRestockSubmitting(false)
+                }
+              }}
+            >
+              Xác nhận nhập kho
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dish Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

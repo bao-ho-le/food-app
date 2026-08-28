@@ -33,6 +33,7 @@ public class UserDishMapper {
                 .name(dish.getName())
                 .price(dish.getPrice())
                 .available(dish.isAvailable())
+                .stockQuantity(dish.getStockQuantity())
                 .url(resolveImageUrl(dish))
                 .restaurant(restaurant != null
                         ? RestaurantSummaryDTO.builder().id(restaurant.getId()).name(restaurant.getName()).build()

@@ -28,6 +28,7 @@ public class DishMapper {
                 .name(dish.getName())
                 .price(dish.getPrice())
                 .isAvailable(dish.isAvailable())
+                .stockQuantity(dish.getStockQuantity())
                 .restaurant((Restaurant) Hibernate.unproxy(dish.getRestaurant()))
                 .rating(rating)
                 .tags(tags)

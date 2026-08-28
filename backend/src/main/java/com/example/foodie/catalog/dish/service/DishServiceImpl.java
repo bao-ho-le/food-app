@@ -1,12 +1,14 @@
 package com.example.foodie.catalog.dish.service;
 
 import com.example.foodie.catalog.dish.dto.request.DishRequestDTO;
+import com.example.foodie.catalog.dish.dto.request.DishStockRequestDTO;
 import com.example.foodie.catalog.dish.dto.response.DishDTO;
 import com.example.foodie.catalog.dish.entity.Dish;
 import com.example.foodie.catalog.dish.helper.DishHelper;
 import com.example.foodie.catalog.dish.mapper.DishMapper;
 import com.example.foodie.catalog.dish.repository.DishRepository;
 import com.example.foodie.catalog.image.entity.Image;
+import com.example.foodie.catalog.restaurant.entity.Restaurant;
 import com.example.foodie.feedback.review.entity.Review;
 import com.example.foodie.catalog.image.repository.ImageRepository;
 import com.example.foodie.feedback.review.repository.ReviewRepository;
@@ -18,7 +20,9 @@ import com.example.foodie.catalog.tag.mapper.TagMapper;
 import com.example.foodie.catalog.tag.repository.TagRepository;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.CatalogException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -122,6 +126,22 @@ public class DishServiceImpl implements DishService {
         dish.setAvailable(type == 1);
 
         dishRepository.save(dish);
+    }
+
+    @Transactional
+    @Override
+    public Dish restockDish(Integer dishId, DishStockRequestDTO dishStockRequestDTO) {
+        dishHelper.validateDishId(dishId);
+        dishHelper.validateStockTopUpQuantity(dishStockRequestDTO.getQuantity());
+
+        Dish dish = dishRepository.findByIdForUpdate(dishId)
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
+
+        dish.setStockQuantity(dish.getStockQuantity() + dishStockRequestDTO.getQuantity());
+
+        Dish saved = dishRepository.save(dish);
+        saved.setRestaurant((Restaurant) Hibernate.unproxy(saved.getRestaurant()));
+        return saved;
     }
 
     // Helper

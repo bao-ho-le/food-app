@@ -4,6 +4,7 @@ import com.example.foodie.catalog.dish.dto.response.DishDTO;
 import com.example.foodie.catalog.dish.entity.Dish;
 import com.example.foodie.catalog.tag.dto.response.TagResponseDTO;
 import com.example.foodie.catalog.dish.dto.request.DishRequestDTO;
+import com.example.foodie.catalog.dish.dto.request.DishStockRequestDTO;
 
 import java.util.List;
 
@@ -19,4 +20,6 @@ public interface DishService {
     public List<Integer> getAllDishId();
 
     public void blocking(Integer dishId, Integer type);
+
+    public Dish restockDish(Integer dishId, DishStockRequestDTO dishStockRequestDTO);
 }

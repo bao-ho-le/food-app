@@ -201,7 +201,7 @@ export default function AdminOrdersPage() {
       })
       setPendingAction(null)
     } catch (e) {
-      toast({ variant: "destructive", title: "Cập nhật thất bại", description: "Vui lòng thử lại sau." })
+      toast({ variant: "destructive", title: "Cập nhật thất bại", description: e instanceof Error ? e.message : "Vui lòng thử lại sau." })
     } finally {
       setUpdatingId(null)
     }

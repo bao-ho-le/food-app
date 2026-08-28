@@ -11,5 +11,6 @@ public class DishSummaryDTO {
     private float price;
     private String url;
     private boolean available;
+    private int stockQuantity;
     private RestaurantSummaryDTO restaurant;
 }

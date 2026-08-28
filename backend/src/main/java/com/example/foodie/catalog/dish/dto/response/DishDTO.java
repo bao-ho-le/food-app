@@ -27,6 +27,8 @@ public class DishDTO {
 
     private boolean isAvailable = true;
 
+    private int stockQuantity;
+
     private float rating; // điểm đánh giá món ăn
 
     private List<TagResponseDTO> tags; // danh sách tag của món

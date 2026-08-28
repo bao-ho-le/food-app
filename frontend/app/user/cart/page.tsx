@@ -159,7 +159,7 @@ export default function CartPage() {
         toast({
           variant: "destructive",
           title: "Không thể cập nhật số lượng",
-          description: "Vui lòng thử lại sau.",
+          description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
         })
       } finally {
         delete pendingQuantityUpdates.current[dishId]
@@ -181,7 +181,7 @@ export default function CartPage() {
           toast({
             variant: "destructive",
             title: "Không thể cập nhật số lượng",
-            description: "Vui lòng thử lại sau.",
+            description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
           })
         }
       }),
@@ -293,7 +293,7 @@ export default function CartPage() {
       toast({
         variant: "destructive",
         title: "Đặt hàng thất bại",
-        description: "Vui lòng thử lại sau.",
+        description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
       })
     }
   }
@@ -377,7 +377,7 @@ export default function CartPage() {
                         {item.dish.isAvailable ? (
                           <div className="flex items-center gap-2 text-sm text-green-600">
                             <PackageCheck className="h-4 w-4" />
-                            <span className="font-medium">Còn bán</span>
+                            <span className="font-medium">Còn bán · Còn {item.dish.stockQuantity} phần</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 text-sm text-red-600">

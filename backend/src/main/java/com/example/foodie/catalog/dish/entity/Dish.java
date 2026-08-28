@@ -38,6 +38,8 @@ public class Dish {
     @Builder.Default
     private boolean isAvailable = true;
 
+    private int stockQuantity;
+
     @CreationTimestamp
     @Column(updatable = false)
     private Instant createdAt;

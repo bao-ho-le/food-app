@@ -71,6 +71,9 @@ public enum ErrorCode {
     DISH_TAGS_REQUIRED(HttpStatus.BAD_REQUEST, "Danh sách tag không được để trống"),
     DISH_BLOCK_TYPE_INVALID(HttpStatus.BAD_REQUEST, "Type không hợp lệ"),
     DISH_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy món ăn"),
+    DISH_STOCK_QUANTITY_REQUIRED(HttpStatus.BAD_REQUEST, "Số lượng nhập kho không được để trống"),
+    DISH_STOCK_QUANTITY_INVALID(HttpStatus.BAD_REQUEST, "Số lượng nhập kho phải lớn hơn 0"),
+    DISH_OUT_OF_STOCK(HttpStatus.CONFLICT, "Món ăn không đủ số lượng tồn kho"),
 
     // ===================== Catalog.Image =====================
     IMAGE_REQUEST_REQUIRED(HttpStatus.BAD_REQUEST, "Thông tin ảnh không được để trống"),
@@ -102,6 +105,7 @@ public enum ErrorCode {
     ORDER_DISH_NOT_FOUND(HttpStatus.NOT_FOUND, "Order dish không tồn tại"),
     ORDER_STATUS_REQUIRED(HttpStatus.BAD_REQUEST, "Trạng thái đơn hàng không được để trống"),
     ORDER_INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "Không thể chuyển sang trạng thái này"),
+    ORDER_STATUS_CONFLICT(HttpStatus.CONFLICT, "Trạng thái đơn hàng vừa được cập nhật bởi thao tác khác, vui lòng tải lại"),
     ORDER_NOT_OWNER(HttpStatus.FORBIDDEN, "Bạn không có quyền thao tác trên đơn hàng này"),
 
     // ===================== Ordering.UserDish =====================

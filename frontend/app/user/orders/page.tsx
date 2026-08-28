@@ -463,6 +463,7 @@ export default function OrdersPage() {
                           rating: 0,
                           totalReviews: 0,
                           isAvailable: true,
+                          stockQuantity: 0,
                           spicyLevel: "none",
                           tags: [],
                         } as Dish)
