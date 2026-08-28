@@ -1,16 +1,14 @@
-package com.example.foodie.auth.security.config;
+package com.example.foodie.auth.config;
 
+import com.example.foodie.auth.exceptionhandler.CustomAccessDeniedHandler;
+import com.example.foodie.auth.exceptionhandler.CustomAuthenticationEntryPoint;
 import com.example.foodie.auth.security.JWTFilter;
-import com.example.foodie.auth.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -37,15 +35,20 @@ public class SecurityConfig {
     @Value("${frontend.url}")
     private String frontendURL;
 
-    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final DaoAuthenticationProvider provider;
     private final JWTFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
         return http
-            .csrf(customizer -> customizer.disable())
-                .cors(Customizer.withDefaults()) // <--- Bắt buộc
+                .csrf(customizer -> customizer.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -58,7 +61,9 @@ public class SecurityConfig {
 
                         .requestMatchers(POST,
                                 String.format("%s/users/login", apiPrefix),
-                                String.format("%s/users/register", apiPrefix))
+                                String.format("%s/users/register", apiPrefix),
+                                String.format("%s/users/refresh", apiPrefix),
+                                String.format("%s/users/logout", apiPrefix))
                             .permitAll()
 
                         .requestMatchers(GET,
@@ -70,12 +75,21 @@ public class SecurityConfig {
                         .requestMatchers(String.format("%s/admin/**", apiPrefix))
                             .hasRole("ADMIN")
 
+                        .requestMatchers(POST, String.format("%s/images", apiPrefix))
+                            .hasRole("ADMIN")
+
+                        .requestMatchers(POST, String.format("%s/dish-tag/**", apiPrefix))
+                            .hasRole("ADMIN")
+
                         .anyRequest()
                             .authenticated()
                 )
-            
-            .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .authenticationProvider(provider)
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -94,21 +108,8 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean
-    public AuthenticationProvider authenticationProvider(BCryptPasswordEncoder passwordEncoder){
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(customUserDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
 
-        return provider;
-    }
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
-    }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+
 }

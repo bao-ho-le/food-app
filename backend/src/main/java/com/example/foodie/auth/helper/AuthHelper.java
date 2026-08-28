@@ -41,7 +41,7 @@ public class AuthHelper {
         if (resetPasswordDTO == null) {
             throw new IdentityException(ErrorCode.USER_RESET_PASSWORD_REQUEST_REQUIRED);
         }
-        validateEmail(resetPasswordDTO.getEmail());
+
         if (resetPasswordDTO.getOldPassword() == null || resetPasswordDTO.getOldPassword().isBlank()) {
             throw new IdentityException(ErrorCode.USER_OLD_PASSWORD_REQUIRED);
         }

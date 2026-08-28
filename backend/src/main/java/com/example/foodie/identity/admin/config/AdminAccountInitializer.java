@@ -33,6 +33,6 @@ public class AdminAccountInitializer implements CommandLineRunner {
         adminDTO.setPhoneNumber(adminPhoneNumber);
         adminDTO.setGender(Gender.OTHER);
 
-        authService.registerAdmin(adminDTO);
+        authService.createAdminUser(adminDTO);
     }
 }

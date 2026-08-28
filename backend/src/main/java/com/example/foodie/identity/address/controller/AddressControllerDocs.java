@@ -23,12 +23,6 @@ import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCH
 @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
 public interface AddressControllerDocs {
 
-    ResponseEntity<List<Address>> getAll();
-
-    ResponseEntity<Address> getById(@PathVariable Integer id);
-
-    ResponseEntity<Void> deleteById(@PathVariable Integer id);
-
     @Operation(summary = "Thêm địa chỉ", description = "Thêm địa chỉ giao hàng mới cho người dùng đang đăng nhập.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Thêm địa chỉ thành công"),
@@ -46,7 +40,7 @@ public interface AddressControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Xoá địa chỉ thành công")
     })
-    ResponseEntity<String> deleteAddress(
+    ResponseEntity<String> deleteAddress(Authentication authentication,
             @Parameter(description = "ID của địa chỉ") @PathVariable(name="address_id") Integer addressId);
 
     @Operation(summary = "Cập nhật địa chỉ", description = "Cập nhật thông tin một địa chỉ giao hàng theo ID.")

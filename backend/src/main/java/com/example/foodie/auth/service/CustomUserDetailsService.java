@@ -1,5 +1,6 @@
-package com.example.foodie.auth.security;
+package com.example.foodie.auth.service;
 
+import com.example.foodie.auth.security.CustomUserDetails;
 import com.example.foodie.identity.user.entity.User;
 import com.example.foodie.identity.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,12 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Không có user này"));
 
+        return new CustomUserDetails(user);
+    }
+
+    public UserDetails loadUserById(Integer userId) {
+        User user = userRepository.findByIdWithRole(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("Không có user này"));
         return new CustomUserDetails(user);
     }
 }

@@ -3,6 +3,7 @@ package com.example.foodie.auth.controller;
 import com.example.foodie.auth.dto.request.AdminDTO;
 import com.example.foodie.auth.dto.response.AdminResponseDTO;
 import com.example.foodie.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,9 +24,9 @@ public class AdminAuthController implements AdminAuthControllerDocs {
 
     @Override
     @PostMapping("/register-admin")
-    public ResponseEntity<AdminResponseDTO> registerAdmin(@Valid @RequestBody AdminDTO adminDTO) {
+    public ResponseEntity<AdminResponseDTO> registerAdmin(@Valid @RequestBody AdminDTO adminDTO, HttpServletResponse response) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(authService.registerAdmin(adminDTO));
+                .body(authService.registerAdmin(adminDTO, response));
     }
 }

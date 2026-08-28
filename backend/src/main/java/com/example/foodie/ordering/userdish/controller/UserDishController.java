@@ -37,16 +37,17 @@ public class UserDishController implements UserDishControllerDocs {
     @Override
     @DeleteMapping("/{user_dish_id}")
     public ResponseEntity<Void> deleteById(
+            Authentication authentication,
             @PathVariable(name="user_dish_id") Integer userDishId){
-        userDishService.deleteUserDishById(userDishId);
+        userDishService.deleteUserDishById(authentication, userDishId);
 
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PutMapping
-    public ResponseEntity<Void> updateQuantity(@Valid @RequestBody UpdateDishQuantityDTO dto){
-        userDishService.updateQuantity(dto.getUserDishId(), dto.getQuantity());
+    public ResponseEntity<Void> updateQuantity(Authentication authentication, @Valid @RequestBody UpdateDishQuantityDTO dto){
+        userDishService.updateQuantity(authentication, dto.getUserDishId(), dto.getQuantity());
 
         return ResponseEntity.ok().build();
     }

@@ -15,6 +15,7 @@ public interface OrderService {
     public Order createOrder(Authentication authentication, Integer addressId);
     public List<Order> getAllOrdersByUserId(Authentication authentication);
     public List<OrderDishResponseDTO> getAllOrderItems(Integer orderId);
+    public List<OrderDishResponseDTO> getOwnOrderItems(Authentication authentication, Integer orderId);
     public Order updateStatus(Integer orderId, Status newStatus);
     public Order cancelOwnOrder(Authentication authentication, Integer orderId);
     public Order confirmOwnOrderReceived(Authentication authentication, Integer orderId);

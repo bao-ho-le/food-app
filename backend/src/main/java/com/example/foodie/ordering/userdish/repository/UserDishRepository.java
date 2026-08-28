@@ -10,4 +10,7 @@ public interface UserDishRepository extends JpaRepository<UserDish, Integer> {
     boolean existsByUser_IdAndDish_Id(int userId, int dishId);
     List<UserDish> findAllByUser_Id(Integer userId);
     Optional<UserDish> findByUser_IdAndDish_Id(Integer userId, Integer dishId);
+    boolean existsByIdAndUser_Id(Integer userDishId, Integer userId);
+    Optional<UserDish> findByIdAndUser_Id(Integer userDishId, Integer userId);
+    void deleteByIdAndUser_Id(Integer userDishId, Integer userId);
 }

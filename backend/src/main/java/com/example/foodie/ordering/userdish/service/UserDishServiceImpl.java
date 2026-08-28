@@ -13,6 +13,7 @@ import com.example.foodie.ordering.userdish.entity.UserDish;
 import com.example.foodie.ordering.userdish.helper.UserDishHelper;
 import com.example.foodie.ordering.userdish.mapper.UserDishMapper;
 import com.example.foodie.ordering.userdish.repository.UserDishRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -72,23 +73,32 @@ public class UserDishServiceImpl implements UserDishService {
         }
     }
 
+    @Transactional
     @Override
-    public void deleteUserDishById(Integer userDishId){
+    public void deleteUserDishById(Authentication authentication, Integer userDishId){
         userDishHelper.validateUserDishId(userDishId);
 
-        userDishRepository.deleteById(userDishId);
+        User user = userHelper.getUserFromAuthentication(authentication);
+
+        if (!userDishRepository.existsByIdAndUser_Id(userDishId, user.getId())) {
+            throw new OrderingException(ErrorCode.USERDISH_NOT_FOUND);
+        }
+        userDishRepository.deleteByIdAndUser_Id(userDishId, user.getId());
     }
 
+    @Transactional
     @Override
-    public void updateQuantity(Integer userDishId, Integer quantity){
+    public void updateQuantity(Authentication authentication, Integer userDishId, Integer quantity){
         userDishHelper.validateUserDishId(userDishId);
         userDishHelper.validateQuantity(quantity);
 
-        UserDish userDish = userDishRepository.findById(userDishId)
+        User user = userHelper.getUserFromAuthentication(authentication);
+
+        UserDish userDish = userDishRepository.findByIdAndUser_Id(userDishId, user.getId())
                 .orElseThrow(() -> new OrderingException(ErrorCode.USERDISH_NOT_FOUND));
 
         if (quantity <= 0){
-            userDishRepository.deleteById(userDishId);
+            userDishRepository.deleteByIdAndUser_Id(userDishId, user.getId());
             return;
         }
 

@@ -42,6 +42,7 @@ public interface UserDishControllerDocs {
             @ApiResponse(responseCode = "200", description = "Xoá thành công")
     })
     ResponseEntity<Void> deleteById(
+            Authentication authentication,
             @Parameter(description = "ID của mục trong giỏ hàng") @PathVariable(name="user_dish_id") Integer userDishId);
 
     @Operation(summary = "Cập nhật số lượng", description = "Cập nhật số lượng của một món trong giỏ hàng.")
@@ -49,5 +50,5 @@ public interface UserDishControllerDocs {
             @ApiResponse(responseCode = "200", description = "Cập nhật thành công"),
             @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
     })
-    ResponseEntity<Void> updateQuantity(@Valid @RequestBody UpdateDishQuantityDTO dto);
+    ResponseEntity<Void> updateQuantity(Authentication authentication, @Valid @RequestBody UpdateDishQuantityDTO dto);
 }

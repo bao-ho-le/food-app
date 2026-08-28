@@ -1,7 +1,5 @@
 import { useState, useCallback } from "react";
-import { API_BASE_URL } from "@/lib/api-client";
-
-// /home/thiennk/Documents/food-ordering-app/hooks/authService/use-login.ts
+import { API_BASE_URL, getAccessToken, setAccessToken } from "@/lib/api-client";
 
 type LoginCredentials = {
   email: string;
@@ -9,23 +7,24 @@ type LoginCredentials = {
 };
 
 type LoginResponse = {
-  token?: string;
+  accessToken?: string;
   roleName?: string;
   email?: string;
 };
 
 const LOGIN_URL = `${API_BASE_URL}/users/login`;
+const LOGOUT_URL = `${API_BASE_URL}/users/logout`;
 
 /**
- * Hook để gọi API login (Spring Boot) và lưu token vào localStorage.
+ * Hook để gọi API login/logout (Spring Boot).
+ * Access token giữ trong memory (lib/api-client.ts), refresh token do backend
+ * set qua HttpOnly cookie — hook này không tự tay đọc/ghi refresh token.
  * Trả về: { login, loading, error, token, logout }
  */
 export default function useLogin() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(() =>
-    typeof window !== "undefined" ? localStorage.getItem("token") : null
-  );
+  const [token, setToken] = useState<string | null>(() => getAccessToken());
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     setLoading(true);
@@ -36,14 +35,14 @@ export default function useLogin() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
+        credentials: "include", // bắt buộc để browser lưu refresh-token cookie
       });
 
       if (!res.ok) {
-        // try to parse error body, fallback to status text
         let message = res.statusText;
         let errBody: any = null;
         try {
-          const errBody = await res.json();
+          errBody = await res.json();
           message = errBody?.message ?? JSON.stringify(errBody) ?? message;
         } catch {}
         if (res.status === 401) {
@@ -52,52 +51,32 @@ export default function useLogin() {
         throw new Error(message || `HTTP ${res.status}`);
       }
 
-      // const data: LoginResponse | string = await res
-      //   .json()
-      //   .catch(() => "" as any);
-
-      let data: LoginResponse | string;
+      let data: LoginResponse;
       try {
         data = await res.json();
       } catch (parseErr) {
-        // Cố gắng đọc body dưới dạng text để trả về message rõ ràng
         const textBody = await res.text().catch(() => String(parseErr));
         throw new Error(
           `Failed to parse JSON response: ${textBody || (parseErr as Error).message || String(parseErr)}`
         );
       }
 
-
-
-      // Kiểm tra nếu data là object thì mới đọc roleName/email
       let roleName: string | undefined;
       let email: string | undefined;
-      if (typeof data === "object" && data !== null) {
-        if (data.roleName) {
-          roleName = data.roleName;
-          localStorage.setItem("roleName", data.roleName);
-        }
-        if (data.email) {
-          email = data.email;
-        }
+      if (data.roleName) {
+        roleName = data.roleName;
+        localStorage.setItem("roleName", data.roleName);
+      }
+      if (data.email) {
+        email = data.email;
       }
 
-      // Support several shapes: { token }, { accessToken }, or plain string
-      let receivedToken: string | null = null;
-
-      if (typeof data === "string") {
-        // Trường hợp backend trả token dưới dạng chuỗi thuần (ví dụ: "eyJhbGciOi...")
-        receivedToken = data;
-      } else {
-        // Trường hợp backend trả JSON object, ví dụ: { token: "...", roleName: "USER", email: "..." }
-        receivedToken = data.token ?? null;
-      }
-
+      const receivedToken = data.accessToken ?? null;
       if (!receivedToken) {
-        throw new Error("Token not found in login response");
+        throw new Error("accessToken not found in login response");
       }
 
-      localStorage.setItem("token", receivedToken);
+      setAccessToken(receivedToken);
       setToken(receivedToken);
 
       // Demo compatibility: also set mock auth keys so layouts using lib/auth.ts work.
@@ -125,10 +104,17 @@ export default function useLogin() {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("roleName");
-    setToken(null);
+  const logout = useCallback(async () => {
+    try {
+      // Chỉ backend mới xoá được HttpOnly cookie — JS không đọc/xoá được nó.
+      await fetch(LOGOUT_URL, { method: "POST", credentials: "include" });
+    } catch {
+      // Logout phải luôn coi là thành công phía client dù request lỗi mạng.
+    } finally {
+      setAccessToken(null);
+      setToken(null);
+      localStorage.removeItem("roleName");
+    }
   }, []);
 
   return { login, loading, error, token, logout };

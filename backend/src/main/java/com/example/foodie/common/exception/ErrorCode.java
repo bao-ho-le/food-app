@@ -6,6 +6,15 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum ErrorCode {
 
+    // ===================== Auth =====================
+    AUTHENTICATION_REQUIRED(HttpStatus.UNAUTHORIZED, "Yêu cầu đăng nhập"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tài nguyên này"),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập đã hết hạn"),
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "Token không hợp lệ"),
+    REFRESH_TOKEN_REVOKED(HttpStatus.UNAUTHORIZED, "Refresh token đã bị thu hồi"),
+    REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "Phát hiện refresh token bị sử dụng lại, vui lòng đăng nhập lại"),
+    ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Tài khoản đã bị vô hiệu hoá"),
+
     // ===================== Identity.User =====================
     USER_NOT_AUTHENTICATED(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập"),
     USER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "Id user không được để trống"),

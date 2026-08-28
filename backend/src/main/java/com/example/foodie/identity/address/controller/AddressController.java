@@ -21,26 +21,6 @@ public class AddressController implements AddressControllerDocs {
     private final AddressService addressService;
 
     @Override
-    @GetMapping
-    public ResponseEntity<List<Address>> getAll(){
-        return ResponseEntity.ok(addressService.getAll());
-    }
-
-    @Override
-    @GetMapping("/{id}")
-    public ResponseEntity<Address> getById(@PathVariable Integer id){
-        return ResponseEntity.ok(addressService.getById(id));
-    }
-
-    @Override
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Integer id){
-        addressService.deleteById(id);
-
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
     @PostMapping("/user")
     public ResponseEntity<Address> addAddressByUserId(Authentication authentication,@Valid @RequestBody AddressDTO addressDTO) {
         return ResponseEntity
@@ -56,9 +36,9 @@ public class AddressController implements AddressControllerDocs {
 
     @Override
     @DeleteMapping("/user/{address_id}")
-    public ResponseEntity<String> deleteAddress(
+    public ResponseEntity<String> deleteAddress(Authentication authentication,
             @PathVariable(name="address_id") Integer addressId) {
-        addressService.deleteAddressById(addressId);
+        addressService.deleteAddressById(authentication, addressId);
 
         return ResponseEntity.ok("Xoá địa chỉ thành công");
     }

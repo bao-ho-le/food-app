@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.email = :email")
     Optional<User> findByEmail(String email);
 
+    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.id = :id")
+    Optional<User> findByIdWithRole(Integer id);
+
     long countByCreatedAtBetween(Instant start, Instant end);
 
     List<User> findByCreatedAtBetween(Instant start, Instant end);

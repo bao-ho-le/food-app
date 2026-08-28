@@ -4,7 +4,6 @@ import com.example.foodie.identity.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

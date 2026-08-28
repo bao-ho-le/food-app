@@ -74,12 +74,3 @@ public class User {
     private boolean isActive = true;
 }
 
-// Giải thích cho @Builder.Default
-/*
-Mặc dù bạn viết = true, nhưng builder không gọi setter cho isActive → giá trị false (0 trong MySQL) được persist
-@Builder do Lombok tạo ra chỉ set những field bạn khai trong builder, các field khác sẽ giữ giá trị default của Java object
-Với boolean isActive mặc định trong Java object chưa set → là false
-Khi JPA persist → MySQL lưu 0
-
-Dùng @Builder.Default → Lombok sẽ dùng giá trị default khi builder không set giá trị
- */

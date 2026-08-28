@@ -13,6 +13,6 @@ public interface UserDishService {
     public List<UserDish> getAllUserDishes();
     public List<UserDishResponseDTO> getAllUserDishesByUserId(Authentication authentication);
     public void addUserDish(Authentication authentication, UserDishDTO userDishDTO);
-    public void deleteUserDishById(Integer userDishId);
-    public void updateQuantity(Integer userDishId, Integer quantity);
+    public void deleteUserDishById(Authentication authentication, Integer userDishId);
+    public void updateQuantity(Authentication authentication, Integer userDishId, Integer quantity);
 }

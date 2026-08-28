@@ -20,6 +20,6 @@ public class UserResponseDTO {
     private Gender gender;
     private String phoneNumber;
     private String email;
-    private String token;
+    private String accessToken;
     private RoleName roleName;
 }

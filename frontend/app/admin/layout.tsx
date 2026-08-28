@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { User } from "@/types";
 import { fetchUserProfile } from "@/services/users";
+import useLogin from "@/hooks/authService/use-login";
 
 const createAdminUserFromStorage = (data: any): User => {
   return {
@@ -69,19 +70,20 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { logout } = useLogin();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const token = localStorage.getItem("token");
     const storedUserString =
       localStorage.getItem("food_ordering_user") ?? localStorage.getItem("user");
 
-    if (!token) {
-      router.replace("/login");
-      return;
-    }
+    // Không gate cứng theo localStorage nữa — access token giờ sống trong
+    // memory nên sau F5 sẽ luôn rỗng. Cứ gọi thẳng /users/profiles: nếu
+    // request 401, apiClient tự refresh bằng cookie rồi retry; chỉ khi
+    // refresh cũng thất bại (không còn phiên hợp lệ) mới rơi vào .catch bên
+    // dưới và redirect login.
 
     // Hiển thị tạm dữ liệu từ localStorage trong lúc chờ xác thực thật với backend
     if (storedUserString) {
@@ -92,7 +94,7 @@ export default function AdminLayout({
       }
     }
 
-    fetchUserProfile({ token })
+    fetchUserProfile()
       .then((profile) => {
         if (profile.roleName !== "ADMIN") {
           router.replace("/login");
@@ -114,14 +116,16 @@ export default function AdminLayout({
       });
   }, [router]);
 
-  const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("roleName");
-      localStorage.removeItem("food_ordering_user");
-      localStorage.removeItem("user");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("food_ordering_user");
+        localStorage.removeItem("user");
+      }
+      router.push("/login");
     }
-    router.push("/login");
   };
 
   if (!user) {

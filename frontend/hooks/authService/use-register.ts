@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { API_BASE_URL } from "@/lib/api-client";
+import { API_BASE_URL, getAccessToken, setAccessToken } from "@/lib/api-client";
 
 type RegisterCredentials = {
   fullName?: string;
@@ -12,7 +12,7 @@ type RegisterCredentials = {
 };
 
 type RegisterResponse = {
-  token?: string;
+  accessToken?: string;
   roleName?: string;
   email?: string;
     fullName?: string;
@@ -24,9 +24,7 @@ const REGISTER_URL = `${API_BASE_URL}/users/register`;
 export default function useRegister() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(() =>
-    typeof window !== "undefined" ? localStorage.getItem("token") : null
-  );
+  const [token, setToken] = useState<string | null>(() => getAccessToken());
 
   const register = useCallback(async (credentials: RegisterCredentials) => {
     setLoading(true);
@@ -37,6 +35,7 @@ export default function useRegister() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
+        credentials: "include", // bắt buộc để browser lưu refresh-token cookie
       });
 
       if (!res.ok) {
@@ -66,24 +65,22 @@ export default function useRegister() {
         );
       }
 
-      // nhận token từ nhiều dạng response
-      let receivedToken: string | null = null;
-     
-        receivedToken = data.token ?? null;
-      
+      const receivedToken = data.accessToken ?? null;
 
       if (!receivedToken) {
         throw new Error("Không nhận được token từ server");
       }
 
-      // lưu token / thông tin cần thiết trên client
+      // Access token giữ trong memory (lib/api-client.ts) — không localStorage.
+      // Refresh token do backend set qua HttpOnly cookie, JS không đọc/ghi.
+      setAccessToken(receivedToken);
+
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", receivedToken);
-        if (typeof data === "object" && data?.roleName) {
+        if (data?.roleName) {
           localStorage.setItem("roleName", data.roleName);
         }
         // lưu thông tin user tối giản (nếu muốn)
-        const userObj = { email: (data && (data as any).email) ?? credentials.email, name: credentials.name ?? null };
+        const userObj = { email: data?.email ?? credentials.email, name: credentials.name ?? null };
         localStorage.setItem("user", JSON.stringify(userObj));
       }
 

@@ -1,5 +1,6 @@
 package com.example.foodie.identity.user.service;
 
+import com.example.foodie.auth.repository.RefreshTokenRepository;
 import com.example.foodie.common.exception.ErrorCode;
 import com.example.foodie.common.exception.business_exception.IdentityException;
 import com.example.foodie.identity.user.dto.request.UserProfileUpdateDTO;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -21,6 +23,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserHelper userHelper;
     private final UserMapper userMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public UserProfileDTO getUserProfileByToken(Authentication authentication){
@@ -88,8 +91,12 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IdentityException(ErrorCode.USER_NOT_FOUND));
 
-        user.setActive(type == 1);
-
+        boolean active = (type == 1);
+        user.setActive(active);
         userRepository.save(user);
+
+        if (!active) {
+            refreshTokenRepository.revokeAllByUser(user, Instant.now());
+        }
     }
 }

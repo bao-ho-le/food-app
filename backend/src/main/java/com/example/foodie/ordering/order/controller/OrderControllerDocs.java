@@ -36,6 +36,7 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "400", description = "Đơn hàng không tồn tại")
     })
     ResponseEntity<List<OrderDishResponseDTO>> getAllOrderItems(
+            Authentication authentication,
             @Parameter(description = "ID của đơn hàng") @PathVariable(name="order_id") Integer orderId);
 
     @Operation(summary = "Tạo đơn hàng", description = "Tạo đơn hàng mới từ giỏ hàng hiện tại của người dùng, giao tới địa chỉ chỉ định.")

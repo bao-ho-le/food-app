@@ -6,9 +6,6 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -40,16 +37,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthenticationException(AuthenticationException exception, HttpServletRequest request) {
         log.error("Unhandled exception", exception);
 
-        String message;
-        if (exception instanceof DisabledException) {
-            message = "Tài khoản đã bị vô hiệu hóa";
-        } else if (exception instanceof LockedException) {
-            message = "Tài khoản đã bị khóa";
-        } else if (exception instanceof CredentialsExpiredException) {
-            message = "Thông tin đăng nhập đã hết hạn";
-        } else {
-            message = "Email hoặc mật khẩu không đúng";
-        }
+        String message = "Email hoặc mật khẩu không đúng";
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)

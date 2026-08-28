@@ -32,22 +32,6 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public List<Address> getAll(){
-        return addressRepository.findAll();
-    }
-
-    @Override
-    public Address getById(Integer id){
-        return addressRepository.findById(id)
-                .orElseThrow(() -> new IdentityException(ErrorCode.ADDRESS_NOT_FOUND));
-    }
-
-    @Override
-    public void deleteById(Integer id){
-        addressRepository.deleteById(id);
-    }
-
-    @Override
     public Address addAddressByUserId(Authentication authentication, AddressDTO addressDTO){
         addressHelper.validateAddressRequest(addressDTO);
 
@@ -76,13 +60,15 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
-    public void deleteAddressById(Integer addressId){
+    public void deleteAddressById(Authentication authentication, Integer addressId){
         addressHelper.validateAddressId(addressId);
 
-        if (!addressRepository.existsById(addressId)) {
+        User user = userHelper.getUserFromAuthentication(authentication);
+
+        if (!addressRepository.existsByIdAndUser_Id(addressId, user.getId())) {
             throw new IdentityException(ErrorCode.ADDRESS_NOT_FOUND);
         }
-        addressRepository.deleteById(addressId);
+        addressRepository.deleteByIdAndUser_Id(addressId, user.getId());
     }
 
     @Override
@@ -91,7 +77,7 @@ public class AddressServiceImpl implements AddressService {
         addressHelper.validateAddressRequest(addressDTO);
 
         User user = userHelper.getUserFromAuthentication(authentication);
-        Address address = addressRepository.findById(addressId)
+        Address address = addressRepository.findByIdAndUser_Id(addressId, user.getId())
                 .orElseThrow(() -> new IdentityException(ErrorCode.ADDRESS_NOT_FOUND));
 
         if (Boolean.TRUE.equals(addressDTO.getIsDefault())) {

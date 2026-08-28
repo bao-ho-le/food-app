@@ -28,8 +28,9 @@ public class OrderController implements OrderControllerDocs {
     @Override
     @GetMapping("/user/{order_id}")
     public ResponseEntity<List<OrderDishResponseDTO>> getAllOrderItems(
+            Authentication authentication,
             @PathVariable(name="order_id") Integer orderId){
-        return ResponseEntity.ok(orderService.getAllOrderItems(orderId));
+        return ResponseEntity.ok(orderService.getOwnOrderItems(authentication, orderId));
     }
 
     @Override

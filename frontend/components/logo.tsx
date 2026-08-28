@@ -2,13 +2,18 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { trySilentRefresh } from "@/lib/api-client"
 
 export function Logo({ className = "" }: { className?: string }) {
   const [href, setHref] = useState("/")
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      setHref("/user/food")
+    let cancelled = false
+    trySilentRefresh().then((loggedIn) => {
+      if (!cancelled && loggedIn) setHref("/user/food")
+    })
+    return () => {
+      cancelled = true
     }
   }, [])
 

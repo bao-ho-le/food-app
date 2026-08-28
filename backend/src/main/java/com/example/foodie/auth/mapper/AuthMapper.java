@@ -25,34 +25,42 @@ public class AuthMapper {
                 .build();
     }
 
-    public UserResponseDTO toRegisterResponse(UserDTO userDTO, String token) {
+    public UserResponseDTO toRegisterResponse(UserDTO userDTO, String accessToken) {
         return UserResponseDTO.builder()
                 .fullName(userDTO.getFullName())
                 .email(userDTO.getEmail())
                 .phoneNumber(userDTO.getPhoneNumber())
                 .gender(userDTO.getGender())
                 .birthday(userDTO.getBirthday())
-                .token(token)
+                .accessToken(accessToken)
                 .roleName(RoleName.USER)
                 .build();
     }
 
-    public AdminResponseDTO toAdminRegisterResponse(AdminDTO adminDTO, String token) {
+    public AdminResponseDTO toAdminRegisterResponse(AdminDTO adminDTO, String accessToken) {
         return AdminResponseDTO.builder()
                 .fullName(adminDTO.getFullName())
                 .email(adminDTO.getEmail())
                 .phoneNumber(adminDTO.getPhoneNumber())
                 .gender(adminDTO.getGender())
                 .birthday(adminDTO.getBirthday())
-                .token(token)
+                .accessToken(accessToken)
                 .build();
     }
 
-    public UserLoginResponseDTO toLoginResponse(User user, String email, String token) {
+    public UserLoginResponseDTO toLoginResponse(User user, String email, String accessToken) {
         return UserLoginResponseDTO.builder()
                 .email(email)
                 .roleName(user.getRole().getRoleName())
-                .token(token)
+                .accessToken(accessToken)
+                .build();
+    }
+
+    public UserLoginResponseDTO toRefreshResponse(User user, String accessToken) {
+        return UserLoginResponseDTO.builder()
+                .email(user.getEmail())
+                .roleName(user.getRole().getRoleName())
+                .accessToken(accessToken)
                 .build();
     }
 }

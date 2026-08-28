@@ -12,5 +12,5 @@ public class UserLoginResponseDTO {
 
     private String email;
     private RoleName roleName;
-    private String token;
+    private String accessToken;
 }

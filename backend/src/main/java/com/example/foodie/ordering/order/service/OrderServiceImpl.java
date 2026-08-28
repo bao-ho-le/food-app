@@ -131,6 +131,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public List<OrderDishResponseDTO> getOwnOrderItems(Authentication authentication, Integer orderId) {
+        Order order = getOwnOrderOrThrow(authentication, orderId);
+
+        List<OrderDish> orderDishes = orderDishRepository.findByOrder_Id(order.getId());
+
+        if (orderDishes.isEmpty()){
+            throw new OrderingException(ErrorCode.ORDER_NOT_FOUND);
+        }
+
+        return orderDishes.stream()
+                .map(orderDish -> orderMapper.toOrderDishResponse(
+                        orderDish,
+                        resolveImageUrl(orderDish.getDish().getId())))
+                .toList();
+    }
+
+    @Override
     public Order updateStatus(Integer orderId, Status newStatus) {
         orderHelper.validateOrderId(orderId);
         Order order = orderRepository.findById(orderId)

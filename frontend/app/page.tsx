@@ -7,16 +7,24 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { UtensilsCrossed, ShoppingBag, Star, Clock } from "lucide-react"
+import { trySilentRefresh } from "@/lib/api-client"
 
 export default function HomePage() {
   const router = useRouter()
   const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
-      router.replace("/user/food")
-    } else {
-      setCheckingAuth(false)
+    let cancelled = false
+    trySilentRefresh().then((loggedIn) => {
+      if (cancelled) return
+      if (loggedIn) {
+        router.replace("/user/food")
+      } else {
+        setCheckingAuth(false)
+      }
+    })
+    return () => {
+      cancelled = true
     }
   }, [router])
 
