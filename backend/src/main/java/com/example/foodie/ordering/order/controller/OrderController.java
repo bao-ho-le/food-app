@@ -3,6 +3,7 @@ package com.example.foodie.ordering.order.controller;
 import com.example.foodie.ordering.order.dto.request.OrderDTO;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
 import com.example.foodie.ordering.order.entity.Order;
+import com.example.foodie.ordering.order.service.OrderIdempotencyService;
 import com.example.foodie.ordering.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -17,7 +18,9 @@ import java.util.List;
 @RequestMapping("${api.prefix}/orders")
 @AllArgsConstructor
 public class OrderController implements OrderControllerDocs {
+
     private final OrderService orderService;
+    private final OrderIdempotencyService orderIdempotencyService;
 
     @Override
     @GetMapping("/user")
@@ -35,10 +38,12 @@ public class OrderController implements OrderControllerDocs {
 
     @Override
     @PostMapping
-    public ResponseEntity<Order> createOrder(Authentication authentication,@Valid @RequestBody OrderDTO orderDTO){
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(orderService.createOrder(authentication, orderDTO.getAddressId()));
+    public ResponseEntity<Order> createOrder(
+            Authentication authentication,
+            @Valid @RequestBody OrderDTO orderDTO,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
+    ){
+        return orderIdempotencyService.createOrder(authentication, orderDTO.getAddressId(), idempotencyKey);
     }
 
     @Override

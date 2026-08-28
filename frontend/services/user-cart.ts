@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client"
+import { getOrCreateIdempotencyKey } from "@/lib/idempotency"
 import type { CartItem, Dish } from "@/types"
 
 type UserDishResponse = {
@@ -77,7 +78,10 @@ export async function updateUserCartItemQuantity(
 }
 
 export async function createOrder(addressId: string | number) {
-  const headers = getAuthHeaders()
+  const headers = {
+    ...getAuthHeaders(),
+    "Idempotency-Key": getOrCreateIdempotencyKey(),
+  }
   const response = await apiClient.post("/orders", { addressId }, { headers })
   return response
 }

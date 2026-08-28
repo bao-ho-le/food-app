@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public interface OrderControllerDocs {
             @ApiResponse(responseCode = "201", description = "Tạo đơn hàng thành công"),
             @ApiResponse(responseCode = "400", description = "Địa chỉ không hợp lệ hoặc giỏ hàng trống")
     })
-    ResponseEntity<Order> createOrder(Authentication authentication, @Valid @RequestBody OrderDTO orderDTO);
+    ResponseEntity<Order> createOrder(Authentication authentication, @Valid @RequestBody OrderDTO orderDTO, @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey);
 
     @Operation(summary = "Huỷ đơn hàng của tôi", description = "Cho phép khách hàng huỷ đơn hàng của chính mình, nếu trạng thái hiện tại cho phép huỷ.")
     @ApiResponses({

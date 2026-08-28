@@ -11,6 +11,8 @@ import {
   updateUserCartItemQuantity,
   createOrder,
 } from "@/services/user-cart"
+import { clearIdempotencyKey } from "@/lib/idempotency"
+import { ApiError } from "@/lib/api-client"
 import { Minus, Plus, Trash2, ShoppingBag, PackageCheck, Ban, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -51,6 +53,7 @@ export default function CartPage() {
   const [addressError, setAddressError] = useState<string | null>(null)
   const [addressLoading, setAddressLoading] = useState(true)
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined)
+  const [isPlacingOrder, setPlacingOrder] = useState(false)
   const pendingQuantityUpdates = useRef<Record<string, {
     timeout: ReturnType<typeof setTimeout>
     userDishId: string
@@ -261,6 +264,8 @@ export default function CartPage() {
   }
 
   const handleConfirmOrder = async () => {
+    if (isPlacingOrder) return // chặn double-click/double-submit khi request trước còn đang chạy
+
     if (!userInfo || !selectedAddress) {
       toast({
         variant: "destructive",
@@ -269,10 +274,13 @@ export default function CartPage() {
       })
       return
     }
-    await flushQuantityUpdates()
+
+    setPlacingOrder(true)
     try {
+      await flushQuantityUpdates()
       await createOrder(selectedAddress.id)
 
+      clearIdempotencyKey() // thành công -> lần đặt hàng tiếp theo dùng key mới
       setCheckoutOpen(false)
 
       toast({
@@ -290,11 +298,18 @@ export default function CartPage() {
 
       router.push("/user/orders")
     } catch (error) {
+      const isInProgress = error instanceof ApiError && error.errorCode === "REQUEST_IN_PROGRESS"
       toast({
         variant: "destructive",
-        title: "Đặt hàng thất bại",
-        description: error instanceof Error ? error.message : "Vui lòng thử lại sau.",
+        title: isInProgress ? "Đơn hàng đang được xử lý" : "Đặt hàng thất bại",
+        description: isInProgress
+          ? "Yêu cầu trước đó của bạn vẫn đang được xử lý, vui lòng đợi giây lát."
+          : error instanceof Error
+            ? error.message
+            : "Vui lòng thử lại sau.",
       })
+    } finally {
+      setPlacingOrder(false)
     }
   }
 
@@ -581,7 +596,9 @@ export default function CartPage() {
             <DialogClose asChild>
               <Button type="button" variant="outline">Hủy</Button>
             </DialogClose>
-            <Button type="button" onClick={handleConfirmOrder}>Xác nhận đặt hàng</Button>
+            <Button type="button" onClick={handleConfirmOrder} disabled={isPlacingOrder}>
+              {isPlacingOrder ? "Đang đặt hàng..." : "Xác nhận đặt hàng"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </div>

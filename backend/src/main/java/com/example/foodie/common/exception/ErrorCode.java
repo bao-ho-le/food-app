@@ -127,7 +127,8 @@ public enum ErrorCode {
     ORDER_NOT_DELIVERED(HttpStatus.CONFLICT, "Chỉ có thể đánh giá món ăn trong đơn hàng đã giao"),
 
     // ===================== Common =====================
-    SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong");
+    SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong"),
+    REQUEST_IN_PROGRESS(HttpStatus.CONFLICT, "Yêu cầu đang được xử lý, vui lòng thử lại sau");
 
     private final HttpStatus status;
     private final String message;
