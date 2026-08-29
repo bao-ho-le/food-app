@@ -17,11 +17,14 @@ public class OrderHelper {
         }
     }
 
+    // Huỷ chỉ được phép từ PENDING/PREPARING (trước khi shipper nhận hàng) — quyết
+    // định nghiệp vụ: một khi đã DELIVERING thì không còn đường quay lại CANCELLED,
+    // nên hoàn kho chỉ cần xử lý ở hai transition này (xem OrderServiceImpl).
     public void validateStatusTransition(Status current, Status next) {
         boolean valid = switch (current) {
             case PENDING -> next == Status.PREPARING || next == Status.CANCELLED;
             case PREPARING -> next == Status.DELIVERING || next == Status.CANCELLED;
-            case DELIVERING -> next == Status.DELIVERED || next == Status.CANCELLED;
+            case DELIVERING -> next == Status.DELIVERED;
             default -> false; // DELIVERED, CANCELLED là trạng thái cuối
         };
         if (!valid) {

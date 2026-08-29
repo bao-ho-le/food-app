@@ -38,7 +38,8 @@ public interface AddressControllerDocs {
 
     @Operation(summary = "Xoá địa chỉ", description = "Xoá một địa chỉ giao hàng theo ID.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Xoá địa chỉ thành công")
+            @ApiResponse(responseCode = "200", description = "Xoá địa chỉ thành công"),
+            @ApiResponse(responseCode = "404", description = "Địa chỉ không tồn tại hoặc không thuộc về người dùng hiện tại")
     })
     ResponseEntity<String> deleteAddress(Authentication authentication,
             @Parameter(description = "ID của địa chỉ") @PathVariable(name="address_id") Integer addressId);
@@ -46,7 +47,8 @@ public interface AddressControllerDocs {
     @Operation(summary = "Cập nhật địa chỉ", description = "Cập nhật thông tin một địa chỉ giao hàng theo ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Cập nhật thành công"),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc địa chỉ không tồn tại")
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "404", description = "Địa chỉ không tồn tại hoặc không thuộc về người dùng hiện tại")
     })
     ResponseEntity<AddressDTO> updateAddress(Authentication authentication,
                                               @Parameter(description = "ID của địa chỉ") @PathVariable(name="address_id") Integer addressId,

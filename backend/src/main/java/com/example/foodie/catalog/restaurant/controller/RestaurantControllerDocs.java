@@ -22,8 +22,7 @@ public interface RestaurantControllerDocs {
     @Operation(summary = "Lấy danh sách nhà hàng", description = "Trả về toàn bộ nhà hàng trong hệ thống.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Restaurant.class)))),
-            @ApiResponse(responseCode = "404", description = "Không thể lấy danh sách nhà hàng")
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Restaurant.class))))
     })
     ResponseEntity<List<Restaurant>> getAllRestaurants();
 }

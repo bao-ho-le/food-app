@@ -107,40 +107,44 @@ npm run dev
 
 ## 📖 Danh sách API chính (Endpoints)
 
-Tất cả endpoint bên dưới có tiền tố `/api/v1`. Các route đánh dấu 🔓 là public, còn lại yêu cầu Bearer Token (JWT).
+Tất cả endpoint bên dưới có tiền tố `/api/v1`. Các route đánh dấu 🔓 là public; route dưới `/admin/**` yêu cầu Bearer Token với role `ADMIN`; các route còn lại yêu cầu Bearer Token (JWT) của user đã đăng nhập.
 
 ### 👤 Users & Xác thực
 | Method | Endpoint | Mô tả |
 | :--- | :--- | :--- |
 | `POST` | `/users/register` 🔓 | Đăng ký tài khoản người dùng |
-| `POST` | `/users/register-admin` 🔓 | Đăng ký tài khoản quản trị |
 | `POST` | `/users/login` 🔓 | Đăng nhập, trả về JWT |
-| `POST` | `/users/logout` | Đăng xuất |
+| `POST` | `/users/refresh` 🔓 | Làm mới access token từ refresh token cookie |
+| `POST` | `/users/logout` 🔓 | Đăng xuất |
 | `GET` | `/users/profiles` | Xem thông tin cá nhân |
 | `PUT` | `/users/profiles` | Cập nhật thông tin cá nhân |
 | `PUT` | `/users/password` | Đổi mật khẩu |
-| `GET` | `/users/getAll` | Danh sách toàn bộ người dùng (admin) |
-| `POST` | `/users/blocking/{id}/{type}` | Khoá/mở khoá tài khoản (admin) |
+| `POST` | `/admin/users/register-admin` 🔒 ADMIN | Đăng ký tài khoản quản trị mới |
+| `GET` | `/admin/users` 🔒 ADMIN | Danh sách toàn bộ người dùng |
+| `POST` | `/admin/users/blocking/{id}/{type}` 🔒 ADMIN | Khoá/mở khoá tài khoản |
+| `GET` | `/admin/users/{id}/addresses` 🔒 ADMIN | Danh sách địa chỉ của một người dùng |
 
 ### 🏪 Restaurants & 🍽️ Dishes
 | Method | Endpoint | Mô tả |
 | :--- | :--- | :--- |
-| `GET` | `/restaurants` | Danh sách nhà hàng |
-| `POST` | `/restaurants` | Tạo nhà hàng |
-| `PUT` | `/restaurants/{id}` | Cập nhật nhà hàng |
-| `GET` | `/dishes` | Danh sách món ăn |
-| `POST` | `/dishes` | Tạo món ăn |
+| `GET` | `/restaurants` 🔓 | Danh sách nhà hàng |
+| `GET` | `/dishes` 🔓 | Danh sách món ăn |
 | `GET` | `/dishes/{dishId}/tags` | Danh sách tag của món ăn |
 | `GET` | `/dishes/average_rating` 🔓 | Điểm đánh giá trung bình các món |
 | `GET` | `/dishes/allIds` 🔓 | Danh sách toàn bộ ID món ăn |
-| `POST` | `/dishes/blocking/{id}/{type}` | Ẩn/hiện món ăn (admin) |
+| `POST` | `/admin/restaurants` 🔒 ADMIN | Tạo nhà hàng |
+| `PUT` | `/admin/restaurants/{id}` 🔒 ADMIN | Cập nhật nhà hàng |
+| `POST` | `/admin/restaurants/blocking/{id}/{type}` 🔒 ADMIN | Ẩn/hiện nhà hàng |
+| `POST` | `/admin/dishes` 🔒 ADMIN | Tạo món ăn |
+| `POST` | `/admin/dishes/blocking/{id}/{type}` 🔒 ADMIN | Ẩn/hiện món ăn |
+| `POST` | `/admin/dishes/{dishId}/stock` 🔒 ADMIN | Nhập thêm tồn kho cho món ăn |
 
 ### 🏷️ Categories, Tags & Dish-Tag
 | Method | Endpoint | Mô tả |
 | :--- | :--- | :--- |
 | `GET` | `/categories` | Danh sách danh mục món ăn |
 | `GET` | `/tags` 🔓 | Danh sách tag món ăn |
-| `POST` | `/dish-tag/{dish_id}` | Gắn tag cho món ăn |
+| `POST` | `/dish-tag/{dish_id}` 🔒 ADMIN | Gắn tag cho món ăn |
 
 ### 🛒 Giỏ hàng & Đơn hàng
 | Method | Endpoint | Mô tả |
@@ -151,7 +155,21 @@ Tất cả endpoint bên dưới có tiền tố `/api/v1`. Các route đánh d�
 | `DELETE` | `/user-dishes/{user_dish_id}` | Xoá món khỏi giỏ hàng |
 | `GET` | `/orders/user` | Danh sách đơn hàng của người dùng |
 | `GET` | `/orders/user/{order_id}` | Chi tiết một đơn hàng |
-| `POST` | `/orders` | Tạo đơn hàng mới |
+| `POST` | `/orders` | Tạo đơn hàng mới (hỗ trợ header `Idempotency-Key`) |
+| `PATCH` | `/orders/user/{id}/cancel` | Huỷ đơn hàng của tôi (chỉ khi PENDING/PREPARING) |
+| `PATCH` | `/orders/user/{id}/confirm-received` | Xác nhận đã nhận đơn hàng |
+| `GET` | `/admin/orders` 🔒 ADMIN | Danh sách toàn bộ đơn hàng |
+| `GET` | `/admin/orders/{id}` 🔒 ADMIN | Chi tiết một đơn hàng |
+| `GET` | `/admin/orders/{id}/items` 🔒 ADMIN | Danh sách món trong một đơn hàng |
+| `PATCH` | `/admin/orders/{id}/status` 🔒 ADMIN | Cập nhật trạng thái đơn hàng |
+| `DELETE` | `/admin/orders/{id}` 🔒 ADMIN | Xoá đơn hàng (từ chối nếu đã DELIVERED) |
+
+### 📊 Dashboard (Admin)
+| Method | Endpoint | Mô tả |
+| :--- | :--- | :--- |
+| `GET` | `/admin/dashboard/stats` 🔒 ADMIN | Thống kê tổng quan |
+| `GET` | `/admin/dashboard/trend` 🔒 ADMIN | Xu hướng doanh thu/đơn hàng theo ngày |
+| `GET` | `/admin/dashboard/top-products` 🔒 ADMIN | Món ăn bán chạy nhất |
 
 ### ⭐ Reviews & Địa chỉ & Ảnh
 | Method | Endpoint | Mô tả |
@@ -162,15 +180,8 @@ Tất cả endpoint bên dưới có tiền tố `/api/v1`. Các route đánh d�
 | `POST` | `/address/user` | Thêm địa chỉ mới |
 | `PUT` | `/address/user/{address_id}` | Cập nhật địa chỉ |
 | `DELETE` | `/address/user/{address_id}` | Xoá địa chỉ |
-| `POST` | `/images` | Upload ảnh món ăn (multipart, lưu trên Cloudinary) |
+| `POST` | `/images` 🔒 ADMIN | Upload ảnh món ăn (multipart, lưu trên Cloudinary) |
 | `GET` | `/images/{dish_id}` | Lấy ảnh của một món ăn |
-
-### 🎯 Bias (Sở thích người dùng)
-| Method | Endpoint | Mô tả |
-| :--- | :--- | :--- |
-| `GET` | `/bias` | Xem sở thích/khẩu vị đã lưu của người dùng |
-| `POST` | `/bias` | Thêm sở thích |
-| `PUT` | `/bias` | Cập nhật sở thích |
 
 ---
 
@@ -204,11 +215,11 @@ Tất cả endpoint bên dưới có tiền tố `/api/v1`. Các route đánh d�
 
 ## 🌟 Tính năng kỹ thuật nổi bật
 
-1. **Spring Data JPA + MySQL**: Tự động đồng bộ schema qua `hibernate.ddl.auto=update`, không cần chạy migration thủ công khi phát triển.
-2. **Bảo mật với Spring Security & JWT**: Xác thực stateless bằng Bearer Token, phân quyền theo route (user/admin).
+1. **Spring Data JPA + MySQL**: Schema được quản lý qua Flyway migration (`db/migration/V*.sql`), Hibernate chỉ validate (`ddl-auto=validate`) chứ không tự đồng bộ.
+2. **Bảo mật với Spring Security & JWT**: Xác thực stateless bằng access/refresh token, xoay vòng refresh token kèm phát hiện reuse, phân quyền theo route (user/admin).
 3. **Upload ảnh qua Cloudinary**: Ảnh món ăn được lưu trữ và phân phối qua CDN thay vì lưu trực tiếp trên server.
 4. **Swagger / OpenAPI**: Tài liệu API tương tác được sinh tự động tại `/swagger-ui/index.html`.
-5. **Module Bias**: Lưu và cập nhật sở thích khẩu vị của người dùng, làm nền tảng cho việc gợi ý món ăn.
+5. **Idempotency key**: Tạo đơn hàng hỗ trợ header `Idempotency-Key` để chống tạo đơn trùng khi client gọi lại.
 
 ---
 

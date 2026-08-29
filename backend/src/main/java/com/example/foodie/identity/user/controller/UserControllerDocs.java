@@ -24,7 +24,7 @@ public interface UserControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lấy hồ sơ thành công",
                     content = @Content(schema = @Schema(implementation = UserProfileDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Không thể lấy hồ sơ")
+            @ApiResponse(responseCode = "404", description = "Tài khoản trong token không còn tồn tại")
     })
     @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
     ResponseEntity<UserProfileDTO> getUserProfile(Authentication authentication);

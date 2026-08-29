@@ -29,7 +29,7 @@ public interface ReviewControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lấy danh sách đánh giá thành công",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = ReviewResponseDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Món ăn không tồn tại")
+            @ApiResponse(responseCode = "404", description = "Món ăn không tồn tại")
     })
     ResponseEntity<List<ReviewResponseDTO>> getAllReviewsByDishId(
             @Parameter(description = "ID của món ăn") @PathVariable(name="dish_id") Integer dishId);
@@ -37,8 +37,9 @@ public interface ReviewControllerDocs {
     @Operation(summary = "Thêm đánh giá", description = "Thêm đánh giá cho một món ăn đã đặt (theo order_dish_id).")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Thêm đánh giá thành công"),
-            @ApiResponse(responseCode = "400", description = "Món ăn đã đặt không tồn tại hoặc dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
             @ApiResponse(responseCode = "403", description = "Đơn hàng không thuộc về người dùng hiện tại"),
+            @ApiResponse(responseCode = "404", description = "Món ăn đã đặt không tồn tại"),
             @ApiResponse(responseCode = "409", description = "Đơn hàng chưa được giao hoặc đã được đánh giá")
     })
     ResponseEntity<Review> addReview(

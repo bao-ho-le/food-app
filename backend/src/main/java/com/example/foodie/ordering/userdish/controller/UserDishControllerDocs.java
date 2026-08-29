@@ -23,17 +23,18 @@ import static com.example.foodie.common.config.OpenApiConfig.BEARER_SECURITY_SCH
 @SecurityRequirement(name = BEARER_SECURITY_SCHEME)
 public interface UserDishControllerDocs {
 
-    @Operation(summary = "Lấy giỏ hàng", description = "Trả về toàn bộ món ăn trong giỏ hàng của người dùng đang đăng nhập.")
+    @Operation(summary = "Lấy giỏ hàng", description = "Trả về toàn bộ món ăn trong giỏ hàng của người dùng đang đăng nhập. Giỏ rỗng trả về mảng rỗng.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lấy giỏ hàng thành công"),
-            @ApiResponse(responseCode = "404", description = "Không thể lấy giỏ hàng")
+            @ApiResponse(responseCode = "200", description = "Lấy giỏ hàng thành công")
     })
     ResponseEntity<List<UserDishResponseDTO>> getAllUserDishes(Authentication authentication);
 
-    @Operation(summary = "Thêm món vào giỏ hàng", description = "Thêm một món ăn với số lượng chỉ định vào giỏ hàng.")
+    @Operation(summary = "Thêm món vào giỏ hàng", description = "Thêm một món ăn với số lượng chỉ định vào giỏ hàng. Nếu món đã có trong giỏ, số lượng được cộng dồn.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Thêm vào giỏ hàng thành công"),
-            @ApiResponse(responseCode = "400", description = "Món ăn không tồn tại hoặc dữ liệu không hợp lệ")
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "404", description = "Món ăn không tồn tại"),
+            @ApiResponse(responseCode = "409", description = "Không đủ tồn kho cho số lượng yêu cầu")
     })
     ResponseEntity<Void> addUserDish(Authentication authentication, @Valid @RequestBody UserDishDTO userDishDTO);
 

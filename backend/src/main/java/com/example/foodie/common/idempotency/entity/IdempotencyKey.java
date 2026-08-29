@@ -36,6 +36,11 @@ public class IdempotencyKey {
     @Column(nullable = false, length = 20)
     private IdempotencyStatus status;
 
+    // SHA-256 hex của request body tại thời điểm reserve — dùng để phát hiện
+    // cùng key nhưng khác nội dung request (xem IdempotencyService).
+    @Column(name = "request_fingerprint", nullable = false, length = 64)
+    private String requestFingerprint;
+
     private Integer responseStatus;
 
     @Lob

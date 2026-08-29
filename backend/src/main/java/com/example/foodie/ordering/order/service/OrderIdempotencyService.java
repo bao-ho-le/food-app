@@ -2,7 +2,8 @@ package com.example.foodie.ordering.order.service;
 
 import com.example.foodie.common.idempotency.service.IdempotencyService;
 import com.example.foodie.identity.user.helper.UserHelper;
-import com.example.foodie.ordering.order.entity.Order;
+import com.example.foodie.ordering.order.dto.request.OrderDTO;
+import com.example.foodie.ordering.order.dto.response.OrderResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,9 @@ public class OrderIdempotencyService {
     private final IdempotencyService idempotencyService;
     private final UserHelper userHelper;
 
-    public ResponseEntity<Order> createOrder(
+    public ResponseEntity<OrderResponseDTO> createOrder(
             Authentication authentication,
-            Integer addressId,
+            OrderDTO orderDTO,
             String idempotencyKey) {
 
         Integer userId =
@@ -29,10 +30,11 @@ public class OrderIdempotencyService {
                 idempotencyKey,
                 "CREATE_ORDER",
                 userId,
-                Order.class,
+                orderDTO,
+                OrderResponseDTO.class,
                 () -> ResponseEntity
                         .status(HttpStatus.CREATED)
-                        .body(orderService.createOrder(authentication, addressId))
+                        .body(orderService.createOrder(authentication, orderDTO.getAddressId()))
         );
     }
 }

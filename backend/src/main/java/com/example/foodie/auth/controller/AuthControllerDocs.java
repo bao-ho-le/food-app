@@ -29,7 +29,8 @@ public interface AuthControllerDocs {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Đăng ký thành công",
                     content = @Content(schema = @Schema(implementation = UserResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ hoặc email đã tồn tại")
+            @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ"),
+            @ApiResponse(responseCode = "409", description = "Email hoặc số điện thoại đã tồn tại")
     })
     ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserDTO userDTO, HttpServletResponse response);
 

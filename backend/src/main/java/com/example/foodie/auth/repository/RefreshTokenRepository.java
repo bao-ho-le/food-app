@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -16,8 +17,13 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     Optional<RefreshToken> findByJti(String jti);
 
+    // BUG-001: gọi từ AuthServiceImpl.refresh() ngay trước một `throw` khi phát
+    // hiện reuse. Với propagation mặc định (REQUIRED), UPDATE này tham gia
+    // transaction của caller và bị rollback theo — vô hiệu hoá luôn việc thu
+    // hồi toàn bộ token family. REQUIRES_NEW buộc nó commit độc lập, y hệt
+    // cách IdempotencyKeyStore (cùng codebase) đã dùng cho vấn đề tương tự.
     @Modifying
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("UPDATE RefreshToken r SET r.revokedAt = :now WHERE r.user = :user AND r.revokedAt IS NULL")
     int revokeAllByUser(@Param("user") User user, @Param("now") Instant now);
 

@@ -18,7 +18,7 @@ public class IdempotencyKeyStore {
     private final IdempotencyKeyRepository repository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Optional<IdempotencyKey> tryReserve(String key, String scope, Integer userId) {
+    public Optional<IdempotencyKey> tryReserve(String key, String scope, Integer userId, String requestFingerprint) {
 
         if (repository.existsById(key)) return Optional.empty();
 
@@ -29,6 +29,7 @@ public class IdempotencyKeyStore {
                     .userId(userId)
                     .scope(scope)
                     .status(IdempotencyStatus.IN_PROGRESS)
+                    .requestFingerprint(requestFingerprint)
                     .build();
 
             return Optional.of(repository.saveAndFlush(record));

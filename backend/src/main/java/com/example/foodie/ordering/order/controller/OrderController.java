@@ -2,7 +2,7 @@ package com.example.foodie.ordering.order.controller;
 
 import com.example.foodie.ordering.order.dto.request.OrderDTO;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
-import com.example.foodie.ordering.order.entity.Order;
+import com.example.foodie.ordering.order.dto.response.OrderResponseDTO;
 import com.example.foodie.ordering.order.service.OrderIdempotencyService;
 import com.example.foodie.ordering.order.service.OrderService;
 import jakarta.validation.Valid;
@@ -24,7 +24,7 @@ public class OrderController implements OrderControllerDocs {
 
     @Override
     @GetMapping("/user")
-    public ResponseEntity<List<Order>> getAllOrdersByUserId(Authentication authentication){
+    public ResponseEntity<List<OrderResponseDTO>> getAllOrdersByUserId(Authentication authentication){
         return ResponseEntity.ok(orderService.getAllOrdersByUserId(authentication));
     }
 
@@ -38,23 +38,23 @@ public class OrderController implements OrderControllerDocs {
 
     @Override
     @PostMapping
-    public ResponseEntity<Order> createOrder(
+    public ResponseEntity<OrderResponseDTO> createOrder(
             Authentication authentication,
             @Valid @RequestBody OrderDTO orderDTO,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
     ){
-        return orderIdempotencyService.createOrder(authentication, orderDTO.getAddressId(), idempotencyKey);
+        return orderIdempotencyService.createOrder(authentication, orderDTO, idempotencyKey);
     }
 
     @Override
     @PatchMapping("/user/{id}/cancel")
-    public ResponseEntity<Order> cancelMyOrder(Authentication authentication, @PathVariable Integer id) {
+    public ResponseEntity<OrderResponseDTO> cancelMyOrder(Authentication authentication, @PathVariable Integer id) {
         return ResponseEntity.ok(orderService.cancelOwnOrder(authentication, id));
     }
 
     @Override
     @PatchMapping("/user/{id}/confirm-received")
-    public ResponseEntity<Order> confirmMyOrderReceived(Authentication authentication, @PathVariable Integer id) {
+    public ResponseEntity<OrderResponseDTO> confirmMyOrderReceived(Authentication authentication, @PathVariable Integer id) {
         return ResponseEntity.ok(orderService.confirmOwnOrderReceived(authentication, id));
     }
 }

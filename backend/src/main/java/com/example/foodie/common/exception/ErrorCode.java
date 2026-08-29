@@ -74,6 +74,7 @@ public enum ErrorCode {
     DISH_STOCK_QUANTITY_REQUIRED(HttpStatus.BAD_REQUEST, "Số lượng nhập kho không được để trống"),
     DISH_STOCK_QUANTITY_INVALID(HttpStatus.BAD_REQUEST, "Số lượng nhập kho phải lớn hơn 0"),
     DISH_OUT_OF_STOCK(HttpStatus.CONFLICT, "Món ăn không đủ số lượng tồn kho"),
+    DISH_NOT_AVAILABLE(HttpStatus.CONFLICT, "Món ăn hiện không khả dụng"),
 
     // ===================== Catalog.Image =====================
     IMAGE_REQUEST_REQUIRED(HttpStatus.BAD_REQUEST, "Thông tin ảnh không được để trống"),
@@ -107,6 +108,7 @@ public enum ErrorCode {
     ORDER_INVALID_STATUS_TRANSITION(HttpStatus.CONFLICT, "Không thể chuyển sang trạng thái này"),
     ORDER_STATUS_CONFLICT(HttpStatus.CONFLICT, "Trạng thái đơn hàng vừa được cập nhật bởi thao tác khác, vui lòng tải lại"),
     ORDER_NOT_OWNER(HttpStatus.FORBIDDEN, "Bạn không có quyền thao tác trên đơn hàng này"),
+    ORDER_DELETE_FORBIDDEN(HttpStatus.CONFLICT, "Đơn hàng đã giao không thể xoá, chỉ được lưu trữ"),
 
     // ===================== Ordering.UserDish =====================
     USERDISH_ID_REQUIRED(HttpStatus.BAD_REQUEST, "Id món trong giỏ không được để trống"),
@@ -125,6 +127,10 @@ public enum ErrorCode {
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "Bạn đã review món này rồi"),
     REVIEW_NOT_ORDER_OWNER(HttpStatus.FORBIDDEN, "Bạn không có quyền đánh giá đơn hàng này"),
     ORDER_NOT_DELIVERED(HttpStatus.CONFLICT, "Chỉ có thể đánh giá món ăn trong đơn hàng đã giao"),
+
+    // ===================== Common.Idempotency =====================
+    IDEMPOTENCY_KEY_TOO_LONG(HttpStatus.BAD_REQUEST, "Idempotency-Key không được dài quá 36 ký tự"),
+    IDEMPOTENCY_KEY_REQUEST_MISMATCH(HttpStatus.UNPROCESSABLE_ENTITY, "Idempotency-Key đã được dùng cho một yêu cầu khác với nội dung khác"),
 
     // ===================== Common =====================
     SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong"),

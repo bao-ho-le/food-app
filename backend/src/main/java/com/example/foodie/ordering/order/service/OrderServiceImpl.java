@@ -10,6 +10,7 @@ import com.example.foodie.common.exception.business_exception.OrderingException;
 import com.example.foodie.catalog.image.entity.Image;
 import com.example.foodie.catalog.image.repository.ImageRepository;
 import com.example.foodie.ordering.order.dto.response.OrderDishResponseDTO;
+import com.example.foodie.ordering.order.dto.response.OrderResponseDTO;
 import com.example.foodie.ordering.order.entity.Order;
 import com.example.foodie.ordering.order.entity.OrderDish;
 import com.example.foodie.ordering.order.enums.Status;
@@ -28,10 +29,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -51,31 +52,39 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public List<Order> getAll(){
-        return orderRepository.findAll();
+    public List<OrderResponseDTO> getAll(){
+        return orderRepository.findAll().stream().map(orderMapper::toResponse).toList();
     }
 
     @Override
-    public Order getById(Integer id){
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_NOT_FOUND));
+    public OrderResponseDTO getById(Integer id){
+        return orderMapper.toResponse(getOrderOrThrow(id));
     }
 
     @Override
     public void deleteById(Integer id){
+        Order order = getOrderOrThrow(id);
+
+        // Đơn đã giao phải được giữ lại cho audit/reporting; xoá dữ liệu cần cơ
+        // chế archival riêng, không phải DELETE thông thường.
+        if (order.getStatus() == Status.DELIVERED) {
+            throw new OrderingException(ErrorCode.ORDER_DELETE_FORBIDDEN);
+        }
         orderRepository.deleteById(id);
     }
 
     @Override
-    public List<Order> getAllOrdersByUserId(Authentication authentication){
+    public List<OrderResponseDTO> getAllOrdersByUserId(Authentication authentication){
         User user = userHelper.getUserFromAuthentication(authentication);
 
-        return orderRepository.findAllByUser_Id(user.getId());
+        return orderRepository.findAllByUser_Id(user.getId()).stream()
+                .map(orderMapper::toResponse)
+                .toList();
     }
 
     @Transactional
     @Override
-    public Order createOrder(Authentication authentication, Integer addressId){
+    public OrderResponseDTO createOrder(Authentication authentication, Integer addressId){
         orderHelper.validateAddressId(addressId);
 
         User user = userHelper.getUserFromAuthentication(authentication);
@@ -86,18 +95,19 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderingException(ErrorCode.ORDER_CART_EMPTY);
         }
 
-        Optional<Address> address = addressRepository.findById(addressId);
-
-        if (address.isEmpty()){
-            throw new OrderingException(ErrorCode.ADDRESS_NOT_FOUND);
-        }
+        Address address = addressRepository.findByIdAndUser_Id(addressId, user.getId())
+                .orElseThrow(() -> new OrderingException(ErrorCode.ADDRESS_NOT_FOUND));
 
         // Khoá từng dish liên quan (SELECT ... FOR UPDATE) theo thứ tự id tăng dần để
         // tránh deadlock khi nhiều đơn hàng song song cùng đụng vào tập dish giao nhau.
-        Map<Integer, Dish> lockedDishesById = lockDishesForUpdate(allUserDishByUserId);
+        Map<Integer, Dish> lockedDishesById = lockDishesForUpdate(
+                allUserDishByUserId.stream().map(userDish -> userDish.getDish().getId()).toList());
 
-        Order newOrder = orderRepository.save(orderMapper.toEntity(user, address.get().getAddress()));
+        Order newOrder = orderRepository.save(orderMapper.toEntity(user, address.getAddress()));
 
+        // All-or-nothing: nếu bất kỳ món nào không khả dụng hoặc không đủ tồn kho,
+        // buildOrderDishes ném lỗi và @Transactional rollback toàn bộ — không tạo
+        // đơn một phần, không trừ kho các món khác, không xoá giỏ hàng.
         List<OrderDish> orderDishes = buildOrderDishes(allUserDishByUserId, lockedDishesById, newOrder);
 
         newOrder.setTotalPrice(totalPrice(orderDishes));
@@ -107,7 +117,7 @@ public class OrderServiceImpl implements OrderService {
         // Xoá các user dish đã đặt (userdish ở đây đóng vai trò như Cart)
         userDishRepository.deleteAll(allUserDishByUserId);
 
-        return orderRepository.save(newOrder);
+        return orderMapper.toResponse(orderRepository.save(newOrder));
     }
 
     @Override
@@ -146,18 +156,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order updateStatus(Integer orderId, Status newStatus) {
+    public OrderResponseDTO updateStatus(Integer orderId, Status newStatus) {
 
         orderHelper.validateOrderId(orderId);
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_NOT_FOUND));
+        Order order = getOrderOrThrow(orderId);
 
         orderHelper.validateStatusTransition(order.getStatus(), newStatus);
+        restoreStockIfCancelling(order, newStatus);
         order.setStatus(newStatus);
 
         try {
-            return orderRepository.saveAndFlush(order);
+            return orderMapper.toResponse(orderRepository.saveAndFlush(order));
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new OrderingException(ErrorCode.ORDER_STATUS_CONFLICT, e);
         }
@@ -165,14 +175,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order cancelOwnOrder(Authentication authentication, Integer orderId) {
+    public OrderResponseDTO cancelOwnOrder(Authentication authentication, Integer orderId) {
 
         Order order = getOwnOrderOrThrow(authentication, orderId);
         orderHelper.validateStatusTransition(order.getStatus(), Status.CANCELLED);
+        restoreStockIfCancelling(order, Status.CANCELLED);
         order.setStatus(Status.CANCELLED);
 
         try {
-            return orderRepository.saveAndFlush(order);
+            return orderMapper.toResponse(orderRepository.saveAndFlush(order));
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new OrderingException(ErrorCode.ORDER_STATUS_CONFLICT, e);
         }
@@ -180,14 +191,14 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public Order confirmOwnOrderReceived(Authentication authentication, Integer orderId) {
+    public OrderResponseDTO confirmOwnOrderReceived(Authentication authentication, Integer orderId) {
 
         Order order = getOwnOrderOrThrow(authentication, orderId);
         orderHelper.validateStatusTransition(order.getStatus(), Status.DELIVERED);
         order.setStatus(Status.DELIVERED);
 
         try {
-            return orderRepository.saveAndFlush(order);
+            return orderMapper.toResponse(orderRepository.saveAndFlush(order));
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new OrderingException(ErrorCode.ORDER_STATUS_CONFLICT, e);
         }
@@ -196,6 +207,12 @@ public class OrderServiceImpl implements OrderService {
 
 
     // Helper
+
+    private Order getOrderOrThrow(Integer orderId) {
+        orderHelper.validateOrderId(orderId);
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderingException(ErrorCode.ORDER_NOT_FOUND));
+    }
 
     private Order getOwnOrderOrThrow(Authentication authentication, Integer orderId) {
         orderHelper.validateOrderId(orderId);
@@ -208,14 +225,10 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
-    private Map<Integer, Dish> lockDishesForUpdate(List<UserDish> userDishes) {
+    private Map<Integer, Dish> lockDishesForUpdate(Collection<Integer> dishIds) {
 
         // Sort giúp giải quyết deadlock
-        List<Integer> sortedDishIds = userDishes.stream()
-                .map(userDish -> userDish.getDish().getId())
-                .distinct()
-                .sorted()
-                .toList();
+        List<Integer> sortedDishIds = dishIds.stream().distinct().sorted().toList();
 
         Map<Integer, Dish> lockedDishesById = new LinkedHashMap<>();
         for (Integer dishId : sortedDishIds) {
@@ -232,8 +245,8 @@ public class OrderServiceImpl implements OrderService {
         for (UserDish userDish : userDishes){
             Dish dish = lockedDishesById.get(userDish.getDish().getId());
 
-            if (userDish.getQuantity() <= 0 || !dish.isAvailable()){
-                continue;
+            if (!dish.isAvailable()){
+                throw new CatalogException(ErrorCode.DISH_NOT_AVAILABLE);
             }
 
             if (dish.getStockQuantity() < userDish.getQuantity()){
@@ -244,6 +257,29 @@ public class OrderServiceImpl implements OrderService {
             orderDishes.add(orderMapper.toOrderDish(userDish, order));
         }
         return orderDishes;
+    }
+
+    // Do máy trạng thái chỉ cho phép CANCELLED xuất phát từ PENDING/PREPARING
+    // (OrderHelper.validateStatusTransition), món ăn ở đây chắc chắn chưa từng
+    // được chế biến — hoàn kho luôn là đúng, không cần phân biệt thêm.
+    private void restoreStockIfCancelling(Order order, Status newStatus) {
+        if (newStatus != Status.CANCELLED) {
+            return;
+        }
+
+        List<OrderDish> orderDishes = orderDishRepository.findByOrder_Id(order.getId());
+        if (orderDishes.isEmpty()) {
+            return;
+        }
+
+        Map<Integer, Dish> lockedDishesById = lockDishesForUpdate(
+                orderDishes.stream().map(orderDish -> orderDish.getDish().getId()).toList());
+
+        for (OrderDish orderDish : orderDishes) {
+            Dish dish = lockedDishesById.get(orderDish.getDish().getId());
+            dish.setStockQuantity(dish.getStockQuantity() + orderDish.getQuantity());
+        }
+        dishRepository.saveAll(lockedDishesById.values());
     }
 
     private Float totalPrice(List<OrderDish> orderDishes){
