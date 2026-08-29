@@ -1,10 +1,6 @@
 package com.example.foodie.support;
 
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Base cho các test cần MySQL thật (không phải H2), vì hai lý do độc lập:
@@ -12,10 +8,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * 2. Schema H2 hiện sinh từ entity (ddl-auto=create-drop) nên thiếu các ràng buộc
  *    CHECK/UNIQUE chỉ tồn tại trong migration Flyway thật (V2, V3, ...).
  *
- * Container dùng chung, static, để không phải khởi động lại cho mỗi test class.
- * Version 8.4 khớp docker-compose.yml (không dùng "mysql:latest").
+ * Container (MySqlTestContainer) dùng chung với AbstractMySqlDataJpaTest (Phase 4) -- xem
+ * javadoc ở đó để biết vì sao chỉ một container được khởi động cho cả build.
  */
-@Testcontainers
 @SpringBootTest(properties = {
         "spring.flyway.enabled=true",
         "spring.jpa.hibernate.ddl-auto=validate",
@@ -24,9 +19,5 @@ import org.testcontainers.junit.jupiter.Testcontainers;
         // kiểu H2 (vd. query INFORMATION_SCHEMA.SEQUENCES chỉ tồn tại ở H2) trên kết nối MySQL thật.
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect"
 })
-public abstract class AbstractMySqlIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.4");
+public abstract class AbstractMySqlIntegrationTest implements MySqlTestContainer {
 }
