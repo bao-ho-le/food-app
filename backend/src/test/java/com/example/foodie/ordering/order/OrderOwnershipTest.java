@@ -71,6 +71,7 @@ class OrderOwnershipTest extends AbstractMySqlIntegrationTest {
 
         MvcResult result = mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(userA.accessToken()))
+                        .header("Idempotency-Key", "ownership-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressOfB))))
                 .andExpect(status().isNotFound())
@@ -135,6 +136,7 @@ class OrderOwnershipTest extends AbstractMySqlIntegrationTest {
 
         MvcResult result = mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(user.accessToken()))
+                        .header("Idempotency-Key", "owner-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressId))))
                 .andExpect(status().isCreated())

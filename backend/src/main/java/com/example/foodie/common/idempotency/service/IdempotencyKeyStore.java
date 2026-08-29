@@ -22,21 +22,15 @@ public class IdempotencyKeyStore {
 
         if (repository.existsById(key)) return Optional.empty();
 
-        try {
+        IdempotencyKey record = IdempotencyKey.builder()
+                .key(key)
+                .userId(userId)
+                .scope(scope)
+                .status(IdempotencyStatus.IN_PROGRESS)
+                .requestFingerprint(requestFingerprint)
+                .build();
 
-            IdempotencyKey record = IdempotencyKey.builder()
-                    .key(key)
-                    .userId(userId)
-                    .scope(scope)
-                    .status(IdempotencyStatus.IN_PROGRESS)
-                    .requestFingerprint(requestFingerprint)
-                    .build();
-
-            return Optional.of(repository.saveAndFlush(record));
-
-        } catch (DataIntegrityViolationException e) {
-            return Optional.empty();
-        }
+        return Optional.of(repository.saveAndFlush(record));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

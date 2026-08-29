@@ -50,6 +50,7 @@ public class UserDishServiceImpl implements UserDishService {
     }
 
     @Override
+    @Transactional
     public void addUserDish(Authentication authentication, UserDishDTO userDishDTO){
         userDishHelper.validateUserDishRequest(userDishDTO);
 
@@ -67,17 +68,7 @@ public class UserDishServiceImpl implements UserDishService {
             throw new CatalogException(ErrorCode.DISH_OUT_OF_STOCK);
         }
 
-        if (existingUserDish.isPresent()) {
-            UserDish userDish = existingUserDish.get();
-            userDish.setQuantity(requestedTotalQuantity);
-            userDishRepository.save(userDish);
-        } else {
-            userDishRepository.save(UserDish.builder()
-                    .user(user)
-                    .dish(dish)
-                    .quantity(userDishDTO.getQuantity())
-                    .build());
-        }
+        userDishRepository.upsertQuantity(user.getId(), dish.getId(), userDishDTO.getQuantity());
     }
 
     @Transactional

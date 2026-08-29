@@ -131,6 +131,7 @@ public enum ErrorCode {
     // ===================== Common.Idempotency =====================
     IDEMPOTENCY_KEY_TOO_LONG(HttpStatus.BAD_REQUEST, "Idempotency-Key không được dài quá 36 ký tự"),
     IDEMPOTENCY_KEY_REQUEST_MISMATCH(HttpStatus.UNPROCESSABLE_ENTITY, "Idempotency-Key đã được dùng cho một yêu cầu khác với nội dung khác"),
+    IDEMPOTENCY_KEY_REQUIRED(HttpStatus.BAD_REQUEST, "Idempotency-Key là bắt buộc"),
 
     // ===================== Common =====================
     SOMETHING_WENT_WRONG(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong"),

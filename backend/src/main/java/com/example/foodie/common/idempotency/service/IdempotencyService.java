@@ -7,6 +7,7 @@ import com.example.foodie.common.idempotency.enums.IdempotencyStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,7 @@ public class IdempotencyService {
     ) {
 
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            return action.get();
+            throw new CommonException(ErrorCode.IDEMPOTENCY_KEY_REQUIRED);
         }
         if (idempotencyKey.length() > MAX_KEY_LENGTH) {
             throw new CommonException(ErrorCode.IDEMPOTENCY_KEY_TOO_LONG);
@@ -40,7 +41,14 @@ public class IdempotencyService {
 
         String fingerprint = fingerprint(requestPayload);
 
-        Optional<IdempotencyKey> reserved = store.tryReserve(idempotencyKey, scope, userId, fingerprint);
+        Optional<IdempotencyKey> reserved;
+
+        try {
+            reserved = store.tryReserve(idempotencyKey, scope, userId, fingerprint);
+        } catch (DataIntegrityViolationException e) {
+            return handleExisting(idempotencyKey, userId, fingerprint, responseType);
+        }
+
         if (reserved.isEmpty()) {
             return handleExisting(idempotencyKey, userId, fingerprint, responseType);
         }

@@ -100,6 +100,7 @@ class AdminOrderRetentionTest extends AbstractMySqlIntegrationTest {
 
         MvcResult result = mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(user.accessToken()))
+                        .header("Idempotency-Key", "retention-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressId))))
                 .andExpect(status().isCreated())

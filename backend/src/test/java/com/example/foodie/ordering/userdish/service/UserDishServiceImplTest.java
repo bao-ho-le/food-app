@@ -19,14 +19,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -88,7 +86,7 @@ class UserDishServiceImplTest {
         }
 
         @Test
-        @DisplayName("Thêm món chưa có trong giỏ -> lưu mục giỏ mới với đúng số lượng")
+        @DisplayName("Thêm món chưa có trong giỏ -> upsert đúng số lượng vào DB")
         void should_saveNewCartItem_when_dishNotYetInCart() {
             stubCaller();
             Dish dish = Dish.builder().id(1).stockQuantity(10).build();
@@ -97,14 +95,11 @@ class UserDishServiceImplTest {
 
             userDishService.addUserDish(authentication, addDto(1, 2));
 
-            ArgumentCaptor<UserDish> captor = ArgumentCaptor.forClass(UserDish.class);
-            verify(userDishRepository).save(captor.capture());
-            assertThat(captor.getValue().getQuantity()).isEqualTo(2);
-            assertThat(captor.getValue().getId()).isNull();
+            verify(userDishRepository).upsertQuantity(1, 1, 2);
         }
 
         @Test
-        @DisplayName("Giỏ đã có sl 3, thêm tiếp sl 5 -> cộng dồn thành 8, không tạo dòng mới")
+        @DisplayName("Giỏ đã có sl 3, thêm tiếp sl 5 -> gửi đúng PHẦN THÊM (5) cho DB cộng dồn, không phải tổng")
         void should_accumulateQuantity_when_dishAlreadyInCart() {
             stubCaller();
             Dish dish = Dish.builder().id(1).stockQuantity(10).build();
@@ -114,10 +109,9 @@ class UserDishServiceImplTest {
 
             userDishService.addUserDish(authentication, addDto(1, 5));
 
-            ArgumentCaptor<UserDish> captor = ArgumentCaptor.forClass(UserDish.class);
-            verify(userDishRepository).save(captor.capture());
-            assertThat(captor.getValue().getId()).isEqualTo(50);
-            assertThat(captor.getValue().getQuantity()).isEqualTo(8);
+            // upsertQuantity nhận delta (5), không phải tổng (8) -- DB tự cộng dồn qua
+            // ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity).
+            verify(userDishRepository).upsertQuantity(1, 1, 5);
         }
 
         @Test
@@ -147,9 +141,7 @@ class UserDishServiceImplTest {
 
             userDishService.addUserDish(authentication, addDto(1, 5));
 
-            ArgumentCaptor<UserDish> captor = ArgumentCaptor.forClass(UserDish.class);
-            verify(userDishRepository).save(captor.capture());
-            assertThat(captor.getValue().getQuantity()).isEqualTo(8);
+            verify(userDishRepository).upsertQuantity(1, 1, 5);
         }
     }
 

@@ -70,6 +70,7 @@ class OrderStockAccountingTest extends AbstractMySqlIntegrationTest {
 
         MvcResult createResult = mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(user.accessToken()))
+                        .header("Idempotency-Key", "stock-decrement-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressId))))
                 .andExpect(status().isCreated())
@@ -107,6 +108,7 @@ class OrderStockAccountingTest extends AbstractMySqlIntegrationTest {
 
         mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(user.accessToken()))
+                        .header("Idempotency-Key", "stock-rollback-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressId))))
                 .andExpect(status().isConflict())
@@ -128,6 +130,7 @@ class OrderStockAccountingTest extends AbstractMySqlIntegrationTest {
 
         mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(user.accessToken()))
+                        .header("Idempotency-Key", "stock-boundary-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressId))))
                 .andExpect(status().isCreated());
@@ -153,6 +156,7 @@ class OrderStockAccountingTest extends AbstractMySqlIntegrationTest {
         fixtures.addToCart(userB.accessToken(), dishId, 1);
         mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(userB.accessToken()))
+                        .header("Idempotency-Key", "stock-drop-b-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressB))))
                 .andExpect(status().isCreated());
@@ -161,6 +165,7 @@ class OrderStockAccountingTest extends AbstractMySqlIntegrationTest {
         Integer addressA = fixtures.createAddress(userA.accessToken(), "A's address");
         mockMvc.perform(post("/api/v1/orders")
                         .header("Authorization", SystemTestFixtures.bearer(userA.accessToken()))
+                        .header("Idempotency-Key", "stock-drop-a-" + System.nanoTime())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of("addressId", addressA))))
                 .andExpect(status().isConflict())

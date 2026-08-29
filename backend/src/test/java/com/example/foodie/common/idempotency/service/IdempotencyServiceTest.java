@@ -65,26 +65,30 @@ class IdempotencyServiceTest {
     @Nested
     class KhongCoKeyHoacKeyRong {
 
+        // Idempotency-Key giờ là bắt buộc cho các thao tác đi qua execute() (hiện chỉ có tạo
+        // đơn hàng) -- thiếu key không còn được coi là "khách hàng không cần bảo vệ", mà bị từ
+        // chối thẳng để buộc client luôn gửi key, tránh race condition kiểu double-submit khi
+        // key bị bỏ qua.
         @Test
-        @DisplayName("key=null -> thao tác chạy bình thường, store không bị đụng tới")
-        void should_runActionWithoutTouchingStore_when_keyIsNull() {
-            when(action.get()).thenReturn(ResponseEntity.ok("done"));
+        @DisplayName("key=null -> ném IDEMPOTENCY_KEY_REQUIRED, thao tác không chạy")
+        void should_throwKeyRequired_when_keyIsNull() {
+            assertThatThrownBy(() -> idempotencyService.execute(
+                    null, "orders", 1, "payload", String.class, action))
+                    .isInstanceOf(CommonException.class)
+                    .extracting("errorCode").isEqualTo(ErrorCode.IDEMPOTENCY_KEY_REQUIRED);
 
-            ResponseEntity<String> result = idempotencyService.execute(
-                    null, "orders", 1, "payload", String.class, action);
-
-            assertThat(result.getBody()).isEqualTo("done");
-            verifyNoInteractions(store);
+            verifyNoInteractions(action, store);
         }
 
         @Test
-        @DisplayName("key blank -> thao tác chạy bình thường, store không bị đụng tới")
-        void should_runActionWithoutTouchingStore_when_keyIsBlank() {
-            when(action.get()).thenReturn(ResponseEntity.ok("done"));
+        @DisplayName("key blank -> ném IDEMPOTENCY_KEY_REQUIRED, thao tác không chạy")
+        void should_throwKeyRequired_when_keyIsBlank() {
+            assertThatThrownBy(() -> idempotencyService.execute(
+                    "   ", "orders", 1, "payload", String.class, action))
+                    .isInstanceOf(CommonException.class)
+                    .extracting("errorCode").isEqualTo(ErrorCode.IDEMPOTENCY_KEY_REQUIRED);
 
-            idempotencyService.execute("   ", "orders", 1, "payload", String.class, action);
-
-            verifyNoInteractions(store);
+            verifyNoInteractions(action, store);
         }
     }
 
