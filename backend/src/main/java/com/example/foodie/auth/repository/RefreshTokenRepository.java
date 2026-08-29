@@ -32,7 +32,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     void deleteAllExpired(@Param("now") Instant now);
 
     @Modifying
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("UPDATE RefreshToken r SET r.revokedAt = :now " +
             "WHERE r.jti = :jti AND r.revokedAt IS NULL")
     int revokeIfActive(@Param("jti") String jti, @Param("now") Instant now);

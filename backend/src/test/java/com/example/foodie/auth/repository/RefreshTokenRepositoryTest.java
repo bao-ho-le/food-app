@@ -45,6 +45,11 @@ class RefreshTokenRepositoryTest extends AbstractMySqlDataJpaTest {
         User user = newUser();
         RefreshToken token = TestDataFixtures.refreshToken(em, user, FUTURE);
 
+        // Commit dữ liệu fixture để transaction REQUIRES_NEW nhìn thấy token
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        TestTransaction.start();
+
         Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
         int updated = refreshTokenRepository.revokeIfActive(token.getJti(), now);
 
@@ -61,6 +66,10 @@ class RefreshTokenRepositoryTest extends AbstractMySqlDataJpaTest {
     void should_returnZero_when_revokingAlreadyRevokedToken() {
         User user = newUser();
         RefreshToken token = TestDataFixtures.refreshToken(em, user, FUTURE);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        TestTransaction.start();
 
         refreshTokenRepository.revokeIfActive(token.getJti(), Instant.now());
         em.clear();
@@ -85,8 +94,14 @@ class RefreshTokenRepositoryTest extends AbstractMySqlDataJpaTest {
         RefreshToken t2 = TestDataFixtures.refreshToken(em, user, FUTURE);
         RefreshToken t3 = TestDataFixtures.refreshToken(em, user, FUTURE);
 
+        // Commit toàn bộ fixture
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+        TestTransaction.start();
+
         refreshTokenRepository.revokeIfActive(t3.getJti(), Instant.now());
         em.clear();
+
         Instant t3RevokedAtBefore = refreshTokenRepository.findByJti(t3.getJti()).orElseThrow().getRevokedAt();
 
         // revokeAllByUser dùng @Transactional(REQUIRES_NEW) (xem comment BUG-001 trong

@@ -175,7 +175,8 @@ public class AuthServiceImpl implements AuthService {
         Instant now = Instant.now();
         int updated = refreshTokenRepository.revokeIfActive(jti, now);
 
-        // Xử lí trường hợp token đã bị revoke rồi
+        // Xử lí trường hợp token đã bị revoke rồi, nhưng lại gửi request với token cũ
+        // tức là đang có khả năng token bị đánh cấp -> revoke all token
         if (updated == 0) {
             refreshTokenRepository.revokeAllByUser(userRepository.getReferenceById(userId), now);
             log.warn("Refresh token reuse detected for userId={}", userId);

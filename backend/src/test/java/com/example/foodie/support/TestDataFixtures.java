@@ -18,6 +18,7 @@ import com.example.foodie.ordering.order.entity.OrderDish;
 import com.example.foodie.ordering.order.enums.Status;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -138,7 +139,7 @@ public final class TestDataFixtures {
         return em.persistAndFlush(review);
     }
 
-    public static RefreshToken refreshToken(TestEntityManager em, User user, java.time.Instant expiresAt) {
+    public static RefreshToken refreshToken(TestEntityManager em, User user, Instant expiresAt) {
         int n = SEQ.incrementAndGet();
         RefreshToken token = RefreshToken.builder()
                 .jti("jti-" + n)

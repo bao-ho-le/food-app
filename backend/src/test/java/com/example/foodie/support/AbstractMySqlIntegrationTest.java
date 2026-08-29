@@ -1,5 +1,6 @@
 package com.example.foodie.support;
 
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
@@ -10,6 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
  *
  * Container (MySqlTestContainer) dùng chung với AbstractMySqlDataJpaTest (Phase 4) -- xem
  * javadoc ở đó để biết vì sao chỉ một container được khởi động cho cả build.
+ *
+ * @AutoConfigureMockMvc nằm ở đây (không phải riêng từng test Phase 5) để mọi subclass dùng
+ * chung đúng một cấu hình -- FlywayBaselineMigrationTest không dùng MockMvc nhưng có thêm bean
+ * đó cũng vô hại; đổi lại toàn bộ subclass (Phase 0 lẫn Phase 5) chia sẻ CÙNG MỘT
+ * MergedContextConfiguration nên Spring cache và tái dùng đúng một context cho cả build.
  */
 @SpringBootTest(properties = {
         "spring.flyway.enabled=true",
@@ -19,5 +25,6 @@ import org.springframework.boot.test.context.SpringBootTest;
         // kiểu H2 (vd. query INFORMATION_SCHEMA.SEQUENCES chỉ tồn tại ở H2) trên kết nối MySQL thật.
         "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect"
 })
+@AutoConfigureMockMvc
 public abstract class AbstractMySqlIntegrationTest implements MySqlTestContainer {
 }
