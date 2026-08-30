@@ -382,7 +382,6 @@ export default function FoodPage() {
               </div>
             )}
             {paginatedDishes.map((dish) => {
-              const restaurant = getRestaurant(dish)
               const isSelected = selectedDish?.id === dish.id
               return (
                 <Card
@@ -412,20 +411,13 @@ export default function FoodPage() {
                     </div>
                     <div className="flex flex-1 flex-col gap-3 px-4 pb-4 pt-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="line-clamp-1 text-xl font-bold text-card-foreground">{dish.name}</h3>
-                          {restaurant && (
-                            <p className="text-sm font-medium text-muted-foreground line-clamp-1">
-                              {restaurant.name}
-                            </p>
-                          )}
-                        </div>
+                        <h3 className="line-clamp-1 text-base font-bold text-card-foreground">{dish.name}</h3>
                         <div className="flex items-center gap-1 text-base font-semibold text-amber-500 flex-shrink-0">
                           <Star className="h-4 w-4 fill-current" />
                           <span>{dish.rating.toFixed(1)}</span>
                         </div>
                       </div>
-                      <div className="mt-auto flex w-full flex-nowrap gap-2 overflow-hidden">
+                      <div className="mt-auto flex w-full flex-nowrap gap-2 overflow-x-auto">
                         {dish.tags.map((tag) => (
                           <Badge
                             key={tag}
