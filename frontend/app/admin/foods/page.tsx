@@ -567,17 +567,17 @@ export default function FoodsPage() {
                 –{Math.min(page * pageSize, filtered.length)} trong tổng {filtered.length}</>
               }
             >
-              <Table className="[&_th]:py-4 [&_td]:py-4 [&_th]:px-6 [&_td]:px-6 [&_td:last-child]:py-2">
+              <Table className="table-fixed [&_th]:py-4 [&_td]:py-4 [&_th]:px-6 [&_td]:px-6 [&_td:last-child]:py-2">
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
-                    <TableHead className="w-[10%] min-w-[100px]">Hình ảnh</TableHead>
-                    <TableHead className="w-[26%] min-w-[200px]">Tên món</TableHead>
-                    <TableHead className="w-[26%] min-w-[220px]">Tên quán</TableHead>
-                    <TableHead className="w-[12%] min-w-[120px]">Giá tiền</TableHead>
+                    <TableHead className="w-[8%]">Hình ảnh</TableHead>
+                    <TableHead className="w-[22%]">Tên món</TableHead>
+                    <TableHead className="w-[22%]">Tên quán</TableHead>
+                    <TableHead className="w-[12%]">Giá tiền</TableHead>
                     <TableHead className="w-[10%]">Tồn kho</TableHead>
                     <TableHead className="w-[10%]">Đánh giá</TableHead>
-                    <TableHead className="w-[12%]">Tình trạng</TableHead>
-                    <TableHead className="w-[8%] text-right">Thao tác</TableHead>
+                    <TableHead className="w-[10%]">Tình trạng</TableHead>
+                    <TableHead className="w-[6%] text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -586,11 +586,11 @@ export default function FoodsPage() {
                       <TableCell>
                         <img src={d.image} alt={d.name} className="h-12 w-16 object-cover rounded-md border" />
                       </TableCell>
-                      <TableCell className="max-w-[260px]">
-                        <span className="truncate" title={d.name}>{d.name}</span>
+                      <TableCell>
+                        <span className="block truncate" title={d.name}>{d.name}</span>
                       </TableCell>
-                      <TableCell className="max-w-[300px]">
-                        <span className="truncate" title={getRestaurantName(d)}>{getRestaurantName(d)}</span>
+                      <TableCell>
+                        <span className="block truncate" title={getRestaurantName(d)}>{getRestaurantName(d)}</span>
                       </TableCell>
                       <TableCell>
                         {d.price.toLocaleString("vi-VN")}₫

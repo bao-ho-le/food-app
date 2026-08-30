@@ -132,7 +132,7 @@ export default function FoodPage() {
       setDishesLoading(true)
       setDishesError(null)
       try {
-        const data = await fetchDishesRaw()
+        const data = (await fetchDishesRaw()).filter((dish) => dish.restaurant?.available !== false)
         if (!isMounted) return
         const mappedDishes: Dish[] = data.map((dish) => {
           const restaurantId =
