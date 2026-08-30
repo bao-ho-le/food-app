@@ -14,24 +14,18 @@ export type UserAddressPayload = {
   isDefault: boolean
 }
 
-function authHeaders(token: string): HeadersInit {
-  return {
-    Authorization: `Bearer ${token}`,
-  }
+export async function fetchUserAddresses() {
+  return apiClient.get<UserAddressResponse[]>("/address/user")
 }
 
-export async function fetchUserAddresses(token: string) {
-  return apiClient.get<UserAddressResponse[]>("/address/user", { headers: authHeaders(token) })
+export async function createUserAddress(payload: UserAddressPayload) {
+  return apiClient.post<UserAddressResponse>("/address/user", payload)
 }
 
-export async function createUserAddress(token: string, payload: UserAddressPayload) {
-  return apiClient.post<UserAddressResponse>("/address/user", payload, { headers: authHeaders(token) })
+export async function updateUserAddress(addressId: string | number, payload: UserAddressPayload) {
+  return apiClient.put<UserAddressResponse>(`/address/user/${addressId}`, payload)
 }
 
-export async function updateUserAddress(token: string, addressId: string | number, payload: UserAddressPayload) {
-  return apiClient.put<UserAddressResponse>(`/address/user/${addressId}`, payload, { headers: authHeaders(token) })
-}
-
-export async function deleteUserAddress(token: string, addressId: string | number) {
-  return apiClient.delete<string>(`/address/user/${addressId}`, { headers: authHeaders(token) })
+export async function deleteUserAddress(addressId: string | number) {
+  return apiClient.delete<string>(`/address/user/${addressId}`)
 }

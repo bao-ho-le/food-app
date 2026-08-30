@@ -57,8 +57,7 @@ export default function UserLayout({
       }
     }
 
-    const token = localStorage.getItem("token") ?? undefined;
-    fetchUserProfile({ token })
+    fetchUserProfile()
       .then((profile) => {
         setDisplayName(profile.fullName || profile.email || "Người dùng");
         setIsAdmin(profile.roleName === "ADMIN");

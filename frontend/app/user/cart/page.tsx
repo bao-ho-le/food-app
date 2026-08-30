@@ -93,19 +93,12 @@ export default function CartPage() {
 
   useEffect(() => {
     let isMounted = true
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-    if (!token) {
-      setUserError("Vui lòng đăng nhập để xem thông tin giao hàng.")
-      setUserLoading(false)
-      setAddressLoading(false)
-      return
-    }
 
     const loadProfile = async () => {
       setUserLoading(true)
       setUserError(null)
       try {
-        const data = await fetchUserProfile({ token })
+        const data = await fetchUserProfile()
         if (!isMounted) return
         setUserInfo({
           name: data.fullName ?? "",
@@ -124,7 +117,7 @@ export default function CartPage() {
       setAddressLoading(true)
       setAddressError(null)
       try {
-        const data = await fetchUserAddresses(token)
+        const data = await fetchUserAddresses()
         if (!isMounted) return
         setAddresses(data)
       } catch (error) {

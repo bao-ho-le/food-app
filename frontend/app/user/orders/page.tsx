@@ -108,10 +108,8 @@ export default function OrdersPage() {
       }
     }
     const loadProfile = async () => {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-      if (!token) return
       try {
-        const data = await fetchUserProfile({ token })
+        const data = await fetchUserProfile()
         if (!isMounted) return
         setUserInfo({
           name: data.fullName ?? "",

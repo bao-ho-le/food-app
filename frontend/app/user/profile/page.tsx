@@ -167,11 +167,7 @@ function ProfilePageContent() {
       setIsAddressesLoading(true)
       setAddressesError(null)
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-        if (!token) {
-          throw new Error("Vui lòng đăng nhập để xem sổ địa chỉ.")
-        }
-        const addresses = await fetchUserAddresses(token)
+        const addresses = await fetchUserAddresses()
         if (!isMounted) return
 
         setUser((currentUser) => ({
@@ -200,16 +196,6 @@ function ProfilePageContent() {
   }, [toast])
 
   const handleSaveAddress = async (addressData: Omit<Address, "id" | "userId"> & { id?: string }) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-    if (!token) {
-      toast({
-        variant: "destructive",
-        title: "Không thể lưu địa chỉ",
-        description: "Vui lòng đăng nhập lại để tiếp tục.",
-      })
-      return
-    }
-
     if (!addressData.address.trim()) {
       toast({
         variant: "destructive",
@@ -226,8 +212,8 @@ function ProfilePageContent() {
 
     try {
       const response = addressData.id
-        ? await updateUserAddress(token, addressData.id, payload)
-        : await createUserAddress(token, payload)
+        ? await updateUserAddress(addressData.id, payload)
+        : await createUserAddress(payload)
 
       setUser((currentUser) => {
         const normalizedAddress = mapApiAddressToClient(response, currentUser.id, addressData.id)
@@ -272,18 +258,8 @@ function ProfilePageContent() {
   }
 
   const handleDeleteAddress = async (addressId: string) => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-    if (!token) {
-      toast({
-        variant: "destructive",
-        title: "Không thể xóa",
-        description: "Vui lòng đăng nhập lại để tiếp tục.",
-      })
-      return
-    }
-
     try {
-      await deleteUserAddress(token, addressId)
+      await deleteUserAddress(addressId)
       setUser((currentUser) => {
         const newAddresses = currentUser.address.filter((addr) => addr.id !== addressId)
         return { ...currentUser, address: newAddresses }
@@ -344,16 +320,6 @@ function ProfilePageContent() {
       })
       return
     }
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-    if (!token) {
-      toast({
-        variant: "destructive",
-        title: "Không thể cập nhật",
-        description: "Vui lòng đăng nhập lại để tiếp tục.",
-      })
-      return
-    }
-
     const payload = {
       fullName: name.trim(),
       birthday: birthdate ? format(birthdate, "dd-MM-yyyy") : null,
@@ -364,7 +330,7 @@ function ProfilePageContent() {
 
     try {
       setIsSavingProfile(true)
-      const response = await updateUserProfile(payload, { token })
+      const response = await updateUserProfile(payload)
 
       const responseGender = response?.gender?.toLowerCase() as User["gender"] | undefined
       const nextGender = responseGender ?? gender
