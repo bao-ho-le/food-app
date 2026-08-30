@@ -11,6 +11,9 @@ import java.time.Instant;
 public class OrderResponseDTO {
     private Integer id;
     private Integer userId;
+    private String customerName;
+    private String customerEmail;
+    private String customerPhone;
     private Status status;
     private Float totalPrice;
     private String deliveryAddress;

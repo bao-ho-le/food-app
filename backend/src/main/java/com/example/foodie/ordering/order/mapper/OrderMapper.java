@@ -21,9 +21,14 @@ public class OrderMapper {
     }
 
     public OrderResponseDTO toResponse(Order order) {
+        User user = order.getUser();
+
         return OrderResponseDTO.builder()
                 .id(order.getId())
-                .userId(order.getUser() != null ? order.getUser().getId() : null)
+                .userId(user != null ? user.getId() : null)
+                .customerName(user != null ? user.getFullName() : null)
+                .customerEmail(user != null ? user.getEmail() : null)
+                .customerPhone(user != null ? user.getPhoneNumber() : null)
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice())
                 .deliveryAddress(order.getDeliveryAddress())
