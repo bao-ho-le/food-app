@@ -23,6 +23,12 @@ public class AdminDishController implements AdminDishControllerDocs {
     }
 
     @Override
+    @PutMapping("/{dishId}")
+    public ResponseEntity<Dish> updateDish(@PathVariable Integer dishId, @Valid @RequestBody DishRequestDTO dishRequestDTO){
+        return ResponseEntity.ok(dishService.updateDish(dishId, dishRequestDTO));
+    }
+
+    @Override
     @PostMapping("/blocking/{id}/{type}")
     public ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type){
         dishService.blocking(id, type);

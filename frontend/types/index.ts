@@ -67,6 +67,7 @@ export interface AdminDish {
   image: string
   isAvailable: boolean
   stockQuantity: number
+  restaurantId: string
   restaurantName: string
   tags: { id: string; name: string; categoryName?: string }[]
   restaurantAddress?: string

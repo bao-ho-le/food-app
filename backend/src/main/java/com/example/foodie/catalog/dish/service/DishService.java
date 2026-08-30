@@ -13,6 +13,8 @@ public interface DishService {
 
     public Dish createDish(DishRequestDTO dishRequestDTO);
 
+    public Dish updateDish(Integer dishId, DishRequestDTO dishRequestDTO);
+
     public List<TagResponseDTO> getAllTags(Integer dishId);
 
     public List<Float> getAverageRatings();

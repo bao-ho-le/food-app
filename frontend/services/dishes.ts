@@ -43,6 +43,7 @@ function mapAdminDish(dish: DishApiResponse): AdminDish {
     image: dish.url || "",
     isAvailable: Boolean(dish.available),
     stockQuantity: Number(dish.stockQuantity ?? 0),
+    restaurantId: dish.restaurant?.id !== undefined ? String(dish.restaurant.id) : "",
     restaurantName: dish.restaurant?.name ?? "Không rõ",
     tags: (dish.tags ?? []).map((t) => ({
       id: String(t.id ?? t.name),
@@ -82,6 +83,19 @@ export async function createDish(input: CreateDishInput): Promise<AdminDish> {
     imageUrl: input.imageUrl,
   }
   const data = await apiClient.post<DishApiResponse>("/admin/dishes", payload, { headers })
+  return mapAdminDish(data)
+}
+
+export async function updateDish(id: number | string, input: CreateDishInput): Promise<AdminDish> {
+  const headers = getAuthHeaders()
+  const payload = {
+    name: input.name,
+    price: input.price,
+    restaurantId: input.restaurantId,
+    tags: input.tags,
+    imageUrl: input.imageUrl,
+  }
+  const data = await apiClient.put<DishApiResponse>(`/admin/dishes/${id}`, payload, { headers })
   return mapAdminDish(data)
 }
 

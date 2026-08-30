@@ -39,4 +39,10 @@ public class DishTagServiceImpl implements DishTagService {
                 .tag(tag)
                 .build());
     }
+
+    @Override
+    public void removeAllTagsForDish(int dishId) {
+        dishTagHelper.validateDishId(dishId);
+        dishTagRepository.deleteByDish_Id(dishId);
+    }
 }

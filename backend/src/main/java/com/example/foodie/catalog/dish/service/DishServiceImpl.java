@@ -86,6 +86,34 @@ public class DishServiceImpl implements DishService {
     }
 
     @Override
+    @Transactional
+    public Dish updateDish(Integer dishId, DishRequestDTO dishRequestDTO) {
+        dishHelper.validateDishId(dishId);
+        dishHelper.validateDishRequest(dishRequestDTO);
+
+        Dish dish = dishRepository.findById(dishId)
+                .orElseThrow(() -> new CatalogException(ErrorCode.DISH_NOT_FOUND));
+
+        Restaurant restaurant = restaurantRepository.findById(dishRequestDTO.getRestaurantId())
+                .orElseThrow(() -> new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND));
+
+        if (!restaurant.isAvailable()) {
+            throw new CatalogException(ErrorCode.RESTAURANT_UNAVAILABLE);
+        }
+
+        dish.setName(dishRequestDTO.getName());
+        dish.setPrice(dishRequestDTO.getPrice());
+        dish.setRestaurant(restaurant);
+        Dish savedDish = dishRepository.save(dish);
+
+        updateImage(savedDish, dishRequestDTO.getImageUrl());
+        dishTagService.removeAllTagsForDish(savedDish.getId());
+        attachTags(savedDish, dishRequestDTO.getTags());
+
+        return savedDish;
+    }
+
+    @Override
     public List<Float> getAverageRatings() {
         List<Dish> allDishes = dishRepository.findAll();
         List<Float> dishesRating = new ArrayList<>(Collections.nCopies(allDishes.size(), null));
@@ -173,6 +201,17 @@ public class DishServiceImpl implements DishService {
                 .url(imageUrl)
                 .dish(dish)
                 .build());
+    }
+
+    private void updateImage(Dish dish, String imageUrl) {
+        imageRepository.findFirstByDish_IdOrderByIdAsc(dish.getId())
+                .ifPresentOrElse(
+                        image -> {
+                            image.setUrl(imageUrl);
+                            imageRepository.save(image);
+                        },
+                        () -> attachImage(dish, imageUrl)
+                );
     }
 
     private void attachTags(Dish dish, List<Integer> tagIds) {

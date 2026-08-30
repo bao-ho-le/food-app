@@ -18,6 +18,8 @@ public interface AdminDishControllerDocs {
 
     ResponseEntity<Dish> createDish(@Valid @RequestBody DishRequestDTO dishRequestDTO);
 
+    ResponseEntity<Dish> updateDish(@PathVariable Integer dishId, @Valid @RequestBody DishRequestDTO dishRequestDTO);
+
     ResponseEntity<String> blocking(@PathVariable Integer id, @PathVariable Integer type);
 
     ResponseEntity<Dish> restockDish(@PathVariable Integer dishId, @Valid @RequestBody DishStockRequestDTO dishStockRequestDTO);

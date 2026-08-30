@@ -15,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Star, UtensilsCrossed, AlertTriangle, FilterX } from "lucide-react"
 import { Search, MoreVertical, Plus, CheckCircle2, Eye, Pencil, Ban, PackagePlus } from "lucide-react"
 import type { Dish, AdminDish, Tag, Category } from "@/types"
-import { createDish, fetchAdminDishes, setDishBlocking, restockDish } from "@/services/dishes"
+import { createDish, updateDish, fetchAdminDishes, setDishBlocking, restockDish } from "@/services/dishes"
 import { useRestaurants } from "@/hooks/restaurants/use-restaurants"
 import { fetchAllTags } from "@/services/tags"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -23,7 +23,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
-import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
@@ -100,34 +99,33 @@ export default function FoodsPage() {
   type CreateDishInput = {
     name: string
     restaurantId: string
-    description: string
     price: string
     imageUrl: string
   }
 
   const form = useForm<CreateDishInput>({
-    defaultValues: { name: "", restaurantId: "", description: "", price: "", imageUrl: "" },
+    defaultValues: { name: "", restaurantId: "", price: "", imageUrl: "" },
     mode: "onTouched",
   })
 
   // Edit form
   type EditDishInput = CreateDishInput & { tags: string[] }
   const editForm = useForm<EditDishInput>({
-    defaultValues: { name: "", restaurantId: "", description: "", price: "", imageUrl: "", tags: [] },
+    defaultValues: { name: "", restaurantId: "", price: "", imageUrl: "", tags: [] },
     mode: "onTouched",
   })
 
   useEffect(() => {
     if (editing) {
+      const tagIds = editing.tags.map((t) => t.id)
       editForm.reset({
         name: editing.name,
         restaurantId: editing.restaurantId,
-        description: editing.description,
         price: String(editing.price),
         imageUrl: editing.image,
-        tags: editing.tags
+        tags: tagIds
       })
-      setSelectedTags(editing.tags)
+      setSelectedTags(tagIds)
     }
   }, [editing])
 
@@ -396,19 +394,6 @@ export default function FoodsPage() {
                       </FormItem>
                     )
                   }}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mô tả</FormLabel>
-                      <FormControl>
-                        <Textarea rows={3} placeholder="Mô tả ngắn gọn về món ăn" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
                 />
                 {/* Tags multi-select */}
                 <FormItem>
@@ -820,15 +805,22 @@ export default function FoodsPage() {
             <DialogTitle className="text-center">Chỉnh sửa món ăn</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
-            <form className="space-y-4" onSubmit={editForm.handleSubmit((values)=>{
+            <form className="space-y-4" onSubmit={editForm.handleSubmit(async (values)=>{
+              if (!editing) return
               try {
                 const payload = {
-                  ...values,
+                  name: values.name.trim(),
                   price: Number(values.price.replace(/\./g, "").trim() || 0),
-                  tags: selectedTags,
-                  id: editing?.id,
+                  restaurantId: normalizeId(values.restaurantId),
+                  tags: selectedTags.map((tagId) => normalizeId(tagId)),
+                  imageUrl: values.imageUrl.trim(),
                 }
-                console.log('Edit dish', payload)
+                const updated = await updateDish(editing.id, payload)
+                const fallbackRestaurantName = restaurantOptions.find((r) => r.id === values.restaurantId)?.name
+                const nextDish = updated.restaurantName === "Không rõ" && fallbackRestaurantName
+                  ? { ...updated, restaurantName: fallbackRestaurantName }
+                  : updated
+                setDishes((prev) => prev.map((d) => (d.id === editing.id ? nextDish : d)))
                 toast({ title: (
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -906,16 +898,6 @@ export default function FoodsPage() {
                   </FormItem>
                 )
               }} />
-
-              <FormField control={editForm.control} name="description" render={({field})=> (
-                <FormItem>
-                  <FormLabel>Mô tả</FormLabel>
-                  <FormControl>
-                    <Textarea rows={3} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
 
               {/* Tags (reuse chips and popover) */}
               <FormItem>
