@@ -389,7 +389,7 @@ export default function OrdersPage() {
                       )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" disabled={actionLoading}>
+                          <Button variant="destructive" disabled={actionLoading || selectedOrder.status === "delivering"}>
                             <XCircle className="mr-1.5 h-4 w-4" />
                             Huỷ đơn hàng
                           </Button>
