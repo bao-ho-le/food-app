@@ -571,13 +571,13 @@ export default function FoodsPage() {
                 <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     <TableHead className="w-[8%]">Hình ảnh</TableHead>
-                    <TableHead className="w-[30%]">Tên món</TableHead>
+                    <TableHead className="w-[26%]">Tên món</TableHead>
                     <TableHead className="w-[14%]">Tên quán</TableHead>
                     <TableHead className="w-[12%]">Giá tiền</TableHead>
                     <TableHead className="w-[10%]">Tồn kho</TableHead>
                     <TableHead className="w-[10%]">Đánh giá</TableHead>
                     <TableHead className="w-[10%]">Tình trạng</TableHead>
-                    <TableHead className="w-[6%] text-right">Thao tác</TableHead>
+                    <TableHead className="w-[10%] text-right">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
