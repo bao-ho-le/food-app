@@ -29,12 +29,17 @@ export default function CheckoutPage() {
     setUser(authService.getCurrentUser());
   }, []);
 
+  useEffect(() => {
+    if (cart.items.length === 0) {
+      router.push("/user/cart");
+    }
+  }, [cart.items.length, router]);
+
   const restaurantName = cart.items[0]?.dish.category;
   const deliveryFee = 15000;
   const totalAmount = getTotalAmount() + deliveryFee;
 
   if (cart.items.length === 0) {
-    router.push("/user/cart");
     return null;
   }
 
