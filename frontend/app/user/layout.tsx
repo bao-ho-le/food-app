@@ -17,6 +17,7 @@ import {
 // import { authService } from "@/lib/auth";
 import useLogin from "@/hooks/authService/use-login";
 import { fetchUserProfile } from "@/services/users";
+import { trySilentRefresh } from "@/lib/api-client";
 
 import { useCart } from "@/hooks/use-cart";
 import {
@@ -43,6 +44,7 @@ export default function UserLayout({
   const { logout } = useLogin();
   const [displayName, setDisplayName] = useState("Người dùng");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -57,14 +59,19 @@ export default function UserLayout({
       }
     }
 
-    fetchUserProfile()
-      .then((profile) => {
-        setDisplayName(profile.fullName || profile.email || "Người dùng");
-        setIsAdmin(profile.roleName === "ADMIN");
-      })
-      .catch((error) => {
-        console.error("Không thể tải thông tin người dùng", error);
-      });
+    trySilentRefresh().then((loggedIn) => {
+      setIsLoggedIn(loggedIn);
+      if (!loggedIn) return;
+
+      fetchUserProfile()
+        .then((profile) => {
+          setDisplayName(profile.fullName || profile.email || "Người dùng");
+          setIsAdmin(profile.roleName === "ADMIN");
+        })
+        .catch((error) => {
+          console.error("Không thể tải thông tin người dùng", error);
+        });
+    });
   }, []);
 
   const handleLogout = async () => {
@@ -138,25 +145,38 @@ export default function UserLayout({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link href="/user/profile">
-                      <User className="h-4 w-4" />
-                      Hồ sơ
-                    </Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/admin/dashboard">
-                        <ShieldCheck className="h-4 w-4" />
-                        Trang quản trị
-                      </Link>
-                    </DropdownMenuItem>
+                  {isLoggedIn ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/user/profile">
+                          <User className="h-4 w-4" />
+                          Hồ sơ
+                        </Link>
+                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/dashboard">
+                            <ShieldCheck className="h-4 w-4" />
+                            Trang quản trị
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="h-4 w-4" />
+                        Đăng xuất
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href="/login">Đăng nhập</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/register">Đăng ký</Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="h-4 w-4" />
-                    Đăng xuất
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -200,31 +220,52 @@ export default function UserLayout({
                 );
               })}
               <div className="mt-4 flex flex-col gap-1 border-t border-border pt-4">
-                <span className="px-3 pb-1 text-sm font-medium truncate">
-                  {displayName}
-                </span>
-                <Link
-                  href="/user/profile"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
-                >
-                  <User className="h-4 w-4" />
-                  Hồ sơ
-                </Link>
-                {isAdmin && (
-                  <Link
-                    href="/admin/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
-                  >
-                    <ShieldCheck className="h-4 w-4" />
-                    Trang quản trị
-                  </Link>
+                {isLoggedIn ? (
+                  <>
+                    <span className="px-3 pb-1 text-sm font-medium truncate">
+                      {displayName}
+                    </span>
+                    <Link
+                      href="/user/profile"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                    >
+                      <User className="h-4 w-4" />
+                      Hồ sơ
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin/dashboard"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        Trang quản trị
+                      </Link>
+                    )}
+                    <Button variant="ghost" size="sm" className="justify-start" onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Đăng xuất
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                    >
+                      Đăng nhập
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+                    >
+                      Đăng ký
+                    </Link>
+                  </>
                 )}
-                <Button variant="ghost" size="sm" className="justify-start" onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Đăng xuất
-                </Button>
               </div>
             </nav>
           </div>
