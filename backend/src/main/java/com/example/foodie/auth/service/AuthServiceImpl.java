@@ -231,7 +231,7 @@ public class AuthServiceImpl implements AuthService {
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .path(apiPrefix + "/users")
-                .sameSite("Lax")
+                .sameSite(cookieSecure ? "None" : "Lax")
                 .maxAge(maxAge)
                 .build();
 
@@ -243,7 +243,7 @@ public class AuthServiceImpl implements AuthService {
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .path(apiPrefix + "/users")
-                .sameSite("Lax")
+                .sameSite(cookieSecure ? "None" : "Lax")
                 .maxAge(0)
                 .build();
 
