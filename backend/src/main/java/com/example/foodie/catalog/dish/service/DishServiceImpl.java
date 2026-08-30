@@ -105,6 +105,7 @@ public class DishServiceImpl implements DishService {
         dish.setPrice(dishRequestDTO.getPrice());
         dish.setRestaurant(restaurant);
         Dish savedDish = dishRepository.save(dish);
+        savedDish.setRestaurant((Restaurant) Hibernate.unproxy(savedDish.getRestaurant()));
 
         updateImage(savedDish, dishRequestDTO.getImageUrl());
         dishTagService.removeAllTagsForDish(savedDish.getId());
