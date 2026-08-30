@@ -61,10 +61,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" asChild>
-                <Link href="/register">Bắt đầu đặt món</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/user/food">Xem thực đơn</Link>
+                <Link href="/user/food">Bắt đầu đặt món</Link>
               </Button>
             </div>
           </div>

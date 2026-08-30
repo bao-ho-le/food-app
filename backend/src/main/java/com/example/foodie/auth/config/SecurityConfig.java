@@ -69,7 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(GET,
                                 String.format("%s/dishes", apiPrefix),
                                 String.format("%s/dishes/average_rating", apiPrefix),
-                                String.format("%s/dishes/allIds", apiPrefix))
+                                String.format("%s/dishes/allIds", apiPrefix),
+                                String.format("%s/reviews/dish/**", apiPrefix))
                             .permitAll()
 
                         .requestMatchers(String.format("%s/admin/**", apiPrefix))

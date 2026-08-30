@@ -115,7 +115,7 @@ export default function UserLayout({
 
           <div id="user-nav-search-slot" className="hidden flex-1 items-center justify-center md:flex" />
 
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
             <Button variant="ghost" size="icon" className="relative" asChild>
               <Link href="/user/cart">
                 <ShoppingCart className="h-5 w-5" />
