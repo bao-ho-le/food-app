@@ -73,6 +73,10 @@ public class DishServiceImpl implements DishService {
         Restaurant restaurant = restaurantRepository.findById(dishRequestDTO.getRestaurantId())
                 .orElseThrow(() -> new CatalogException(ErrorCode.RESTAURANT_NOT_FOUND));
 
+        if (!restaurant.isAvailable()) {
+            throw new CatalogException(ErrorCode.RESTAURANT_UNAVAILABLE);
+        }
+
         Dish savedDish = dishRepository.save(dishMapper.toEntity(dishRequestDTO, restaurant));
 
         attachImage(savedDish, dishRequestDTO.getImageUrl());

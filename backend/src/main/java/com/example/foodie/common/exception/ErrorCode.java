@@ -60,6 +60,7 @@ public enum ErrorCode {
     RESTAURANT_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy nhà hàng"),
     RESTAURANT_NAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "Nhà hàng đã tồn tại"),
     RESTAURANT_PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Số điện thoại đã tồn tại"),
+    RESTAURANT_UNAVAILABLE(HttpStatus.CONFLICT, "Nhà hàng đang tạm ngừng hoạt động"),
 
     // ===================== Catalog.Dish =====================
     DISH_ID_REQUIRED(HttpStatus.BAD_REQUEST, "Id món ăn không được để trống"),
