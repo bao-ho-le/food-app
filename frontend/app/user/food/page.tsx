@@ -417,7 +417,7 @@ export default function FoodPage() {
                           <span>{dish.rating.toFixed(1)}</span>
                         </div>
                       </div>
-                      <div className="mt-auto flex w-full flex-nowrap gap-2 overflow-x-auto">
+                      <div className="mt-auto flex w-full flex-nowrap gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {dish.tags.map((tag) => (
                           <Badge
                             key={tag}
