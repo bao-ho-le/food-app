@@ -118,13 +118,7 @@ function ProfilePageContent() {
       setProfileError(null)
 
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-
-        if (!token) {
-          throw new Error("Bạn cần đăng nhập để xem thông tin tài khoản.")
-        }
-
-        const data = await fetchUserProfile({ token })
+        const data = await fetchUserProfile()
         if (!isMounted) return
 
         const normalizedGender = data.gender?.toLowerCase() as User["gender"] | undefined

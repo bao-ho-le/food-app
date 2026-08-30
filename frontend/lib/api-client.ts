@@ -122,7 +122,7 @@ async function request<T>(
   if (body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  if (!headers.has("Authorization") && accessToken) {
+  if ((isRetry || !headers.has("Authorization")) && accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
