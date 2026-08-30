@@ -200,7 +200,7 @@ export default function FoodsPage() {
       setRestaurantLimit(10)
       setTagSearch("")
     } catch (e) {
-      toast({ variant: "destructive", title: "Tạo thất bại", description: "Vui lòng thử lại sau." })
+      toast({ variant: "destructive", title: "Tạo thất bại", description: e instanceof Error ? e.message : "Vui lòng thử lại sau." })
     }
   }
 
@@ -733,7 +733,7 @@ export default function FoodsPage() {
                     )})
                     setConfirmDish(null)
                   } catch (e) {
-                    toast({ variant: "destructive", title: "Cập nhật thất bại", description: "Vui lòng thử lại sau." })
+                    toast({ variant: "destructive", title: "Cập nhật thất bại", description: e instanceof Error ? e.message : "Vui lòng thử lại sau." })
                   } finally {
                     setBlockingId(null)
                   }
@@ -830,7 +830,7 @@ export default function FoodsPage() {
                 setEditOpen(false)
                 setEditing(null)
               } catch(e) {
-                toast({ variant:'destructive', title:'Cập nhật thất bại', description:'Vui lòng thử lại sau.' })
+                toast({ variant:'destructive', title:'Cập nhật thất bại', description: e instanceof Error ? e.message : 'Vui lòng thử lại sau.' })
               }
             })}>
               <FormField control={editForm.control} name="name" rules={{ required:'Vui lòng nhập tên món ăn' }} render={({field})=> (
