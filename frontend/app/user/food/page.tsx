@@ -58,7 +58,7 @@ export default function FoodPage() {
     setNavSlot(document.getElementById("user-nav-search-slot"))
   }, [])
 
-  const ITEMS_PER_PAGE = 6
+  const ITEMS_PER_PAGE = 12
 
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<number>(0)
   const REVIEWS_PER_PAGE = 3
@@ -501,7 +501,7 @@ export default function FoodPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-8">
+        <div className="sticky top-20 flex max-h-[calc(100vh-6rem)] flex-col gap-8 overflow-y-auto">
           {selectedDish ? (
             <>
               {/* Card 1: Thông tin món ăn & nhà hàng */}
