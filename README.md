@@ -379,37 +379,37 @@ Test yêu cầu **Docker đang chạy** (Testcontainers cần khởi động con
 
 ## 🗄️ Cơ sở dữ liệu (Database Schema)
 
-Hệ thống có **15 bảng**, quản lý hoàn toàn bằng **8 Flyway migration** tại `backend/src/main/resources/db/migration` (baseline dựng lại từ schema Hibernate đã tồn tại trước khi đưa Flyway vào, các migration sau thêm `refresh_tokens`, `dish.stock_quantity`, `orders.version`, `idempotency_keys`). Mọi khoá ngoại và `ON DELETE` được khai báo tường minh ngay trong SQL migration — không để Hibernate tự sinh — nên toàn vẹn dữ liệu vẫn được giữ kể cả khi có thao tác ghi trực tiếp vào DB ngoài luồng ứng dụng.
+Hệ thống có **15 bảng**, quản lý hoàn toàn bằng **8 Flyway migration**. Bên dưới là bản mô tả ngắn gọn về các bảng hiện có:
 
 ### 👤 Người dùng & Xác thực
 
-| Bảng | Khóa chính | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) |
+| Bảng | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `role` | `id` | `role_name` (`ENUM('ADMIN','USER')`, unique) | — |
-| `user` | `id` | `email`, `phone_number` (unique), `password` (hash), `is_active` | `role_id` → `role.id` (`RESTRICT`) |
-| `refresh_tokens` | `id` (UUID) | `jti` (unique), `expires_at`, `revoked_at` | `user_id` → `user.id` |
-| `address` | `id` | `address`, `is_default` | `user_id` → `user.id` (`CASCADE`) |
-| `idempotency_keys` | `idempotency_key` (varchar 36) | `scope`, `status`, `request_fingerprint` (SHA-256 hex), `response_body` | `user_id` — chỉ lưu id, không có ràng buộc FK |
+| `role` | `role_name` (`ENUM('ADMIN','USER')`, unique) | — | Vai trò của người dùng (admin/khách hàng) |
+| `user` | `email`, `phone_number` (unique), `password` (hash), `is_active` | → `role.id` (`RESTRICT`) | Tài khoản người dùng |
+| `refresh_tokens` | `jti` (unique), `expires_at`, `revoked_at` | → `user.id` | Token cấp lại access token, hỗ trợ thu hồi khi đăng xuất/đổi mật khẩu |
+| `address` | `address`, `is_default` | → `user.id` (`CASCADE`) | Địa chỉ giao hàng của người dùng |
+| `idempotency_keys` | `scope`, `status`, `request_fingerprint` (SHA-256 hex), `response_body` | chỉ lưu `user_id` dạng snapshot, không ràng buộc FK | Chống xử lý trùng khi client gọi lại API tạo đơn |
 
 ### 🏪 Nhà hàng, Món ăn & Phân loại
 
-| Bảng | Khóa chính | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) |
+| Bảng | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `restaurant` | `id` | `name`, `is_available` | — |
-| `dish` | `id` | `price`, `stock_quantity`, `is_available` | `restaurant_id` → `restaurant.id` (`RESTRICT`) |
-| `category` | `id` | `name` (unique) | — |
-| `tag` | `id` | `name` | `category_id` → `category.id` (`RESTRICT`) |
-| `dish_tag` | `id` | bảng nối n–n dish ↔ tag | `dish_id` → `dish.id` (`CASCADE`), `tag_id` → `tag.id` (`CASCADE`) |
-| `image` | `id` | `url`, `is_thumbnail`, `public_id`/`format`/`width`/`height` (Cloudinary) | `image_id` → `dish.id` (`CASCADE`) — tên cột giữ nguyên từ thiết kế ban đầu, thực chất là FK tới `dish`, không phải tự tham chiếu |
+| `restaurant` | `name`, `is_available` | — | Nhà hàng bán món ăn |
+| `dish` | `price`, `stock_quantity`, `is_available` | → `restaurant.id` (`RESTRICT`) | Món ăn thuộc một nhà hàng |
+| `category` | `name` (unique) | — | Danh mục lớn để nhóm các tag |
+| `tag` | `name` | → `category.id` (`RESTRICT`) | Nhãn gắn cho món ăn (vd: cay, chay, best-seller) |
+| `dish_tag` | — | → `dish.id` (`CASCADE`), → `tag.id` (`CASCADE`) | Bảng nối n–n giữa `dish` và `tag` |
+| `image` | `url`, `is_thumbnail`, `public_id`/`format`/`width`/`height` (Cloudinary) | → `dish.id` (`CASCADE`) | Ảnh của món ăn, lưu trên Cloudinary |
 
 ### 🛒 Giỏ hàng, Đơn hàng & Đánh giá
 
-| Bảng | Khóa chính | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) |
+| Bảng | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `user_dish` (giỏ hàng) | `id` | `quantity`, unique `(user_id, dish_id)` | `user_id` → `user.id` (`CASCADE`), `dish_id` → `dish.id` (`CASCADE`) |
-| `orders` | `id` | `version` (optimistic lock), `status` (`ENUM`), `total_price`, `delivery_address` | `user_id` → `user.id` (`RESTRICT`) |
-| `order_dish` | `id` | `quantity`, `price` (chốt tại thời điểm đặt), unique `review_id` | `order_id` → `orders.id` (`CASCADE`), `dish_id` → `dish.id` (`RESTRICT`), `review_id` → `review.id` (`SET NULL`, 1–1) |
-| `review` | `id` | `rating` (1–5), `comment` | — |
+| `user_dish` | `quantity`, unique `(user_id, dish_id)` | → `user.id` (`CASCADE`), → `dish.id` (`CASCADE`) | Giỏ hàng của người dùng |
+| `orders` | `version` (optimistic lock), `status` (`ENUM`), `total_price`, `delivery_address` | → `user.id` (`RESTRICT`) | Đơn hàng |
+| `order_dish` | `quantity`, `price` (chốt tại thời điểm đặt), unique `review_id` | → `orders.id` (`CASCADE`), → `dish.id` (`RESTRICT`), → `review.id` (`SET NULL`, 1–1) | Từng món trong một đơn hàng |
+| `review` | `rating` (1–5), `comment` | — | Đánh giá của khách cho một món trong đơn hàng |
 
 ### Quyết định thiết kế đáng chú ý
 
