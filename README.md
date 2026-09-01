@@ -176,7 +176,7 @@ docker compose down
 
 ## 🚀 Triển khai (Deployment)
 
-Hệ thống chạy trên 2 nền tảng PaaS, không dùng VPS:
+Hệ thống chạy trên 2 nền tảng: Railway cho Spring Boot và MySQL, Vercel cho Next.js.
 
 ### URL public
 
