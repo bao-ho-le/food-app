@@ -4,6 +4,8 @@ Dự án Backend + Frontend cho hệ thống đặt món ăn Foodie, xây dựng
 
 Trọng tâm hiện tại của dự án không nằm ở việc thêm tính năng mới, mà ở **độ đúng đắn của hệ thống khi có nhiều người dùng thao tác đồng thời** — bài toán mà một ứng dụng đặt món thực tế luôn phải đối mặt.
 
+🔗 **Demo trực tuyến:** [https://food-app-roan-nine.vercel.app](https://food-app-roan-nine.vercel.app)
+
 ---
 
 ## 🎯 Bài toán thực tế & Cách hệ thống giải quyết
@@ -169,6 +171,22 @@ Backend sẽ tự động đợi MySQL ở trạng thái `healthy` rồi mới k
 ```bash
 docker compose down
 ```
+
+---
+
+## 🚀 Triển khai (Deployment)
+
+Hệ thống chạy trên 2 nền tảng PaaS, không dùng VPS:
+
+### URL public
+
+| Dịch vụ | URL | Mô tả |
+| :--- | :--- | :--- |
+| **Frontend (Website)** | [food-app-roan-nine.vercel.app](https://food-app-roan-nine.vercel.app) | Giao diện người dùng Next.js |
+| **Backend API Base** | [food-app-production-1b1f.up.railway.app/api/v1](https://food-app-production-1b1f.up.railway.app/api/v1) | Root endpoint Backend |
+| **MySQL** | | Database, không public ra ngoài |
+
+Swagger UI **không** được expose ở production — chỉ bật khi chạy local (xem mục Access Endpoints bên dưới).
 
 ---
 
