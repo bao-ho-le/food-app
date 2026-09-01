@@ -377,6 +377,51 @@ Test yêu cầu **Docker đang chạy** (Testcontainers cần khởi động con
 
 ---
 
+## 🗄️ Cơ sở dữ liệu (Database Schema)
+
+Hệ thống có **15 bảng**, quản lý hoàn toàn bằng **8 Flyway migration** tại `backend/src/main/resources/db/migration` (baseline dựng lại từ schema Hibernate đã tồn tại trước khi đưa Flyway vào, các migration sau thêm `refresh_tokens`, `dish.stock_quantity`, `orders.version`, `idempotency_keys`). Mọi khoá ngoại và `ON DELETE` được khai báo tường minh ngay trong SQL migration — không để Hibernate tự sinh — nên toàn vẹn dữ liệu vẫn được giữ kể cả khi có thao tác ghi trực tiếp vào DB ngoài luồng ứng dụng.
+
+### 👤 Người dùng & Xác thực
+
+| Bảng | Khóa chính | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) |
+| :--- | :--- | :--- | :--- |
+| `role` | `id` | `role_name` (`ENUM('ADMIN','USER')`, unique) | — |
+| `user` | `id` | `email`, `phone_number` (unique), `password` (hash), `is_active` | `role_id` → `role.id` (`RESTRICT`) |
+| `refresh_tokens` | `id` (UUID) | `jti` (unique), `expires_at`, `revoked_at` | `user_id` → `user.id` |
+| `address` | `id` | `address`, `is_default` | `user_id` → `user.id` (`CASCADE`) |
+| `idempotency_keys` | `idempotency_key` (varchar 36) | `scope`, `status`, `request_fingerprint` (SHA-256 hex), `response_body` | `user_id` — chỉ lưu id, không có ràng buộc FK |
+
+### 🏪 Nhà hàng, Món ăn & Phân loại
+
+| Bảng | Khóa chính | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) |
+| :--- | :--- | :--- | :--- |
+| `restaurant` | `id` | `name`, `is_available` | — |
+| `dish` | `id` | `price`, `stock_quantity`, `is_available` | `restaurant_id` → `restaurant.id` (`RESTRICT`) |
+| `category` | `id` | `name` (unique) | — |
+| `tag` | `id` | `name` | `category_id` → `category.id` (`RESTRICT`) |
+| `dish_tag` | `id` | bảng nối n–n dish ↔ tag | `dish_id` → `dish.id` (`CASCADE`), `tag_id` → `tag.id` (`CASCADE`) |
+| `image` | `id` | `url`, `is_thumbnail`, `public_id`/`format`/`width`/`height` (Cloudinary) | `image_id` → `dish.id` (`CASCADE`) — tên cột giữ nguyên từ thiết kế ban đầu, thực chất là FK tới `dish`, không phải tự tham chiếu |
+
+### 🛒 Giỏ hàng, Đơn hàng & Đánh giá
+
+| Bảng | Khóa chính | Cột đáng chú ý | Khóa ngoại (`ON DELETE`) |
+| :--- | :--- | :--- | :--- |
+| `user_dish` (giỏ hàng) | `id` | `quantity`, unique `(user_id, dish_id)` | `user_id` → `user.id` (`CASCADE`), `dish_id` → `dish.id` (`CASCADE`) |
+| `orders` | `id` | `version` (optimistic lock), `status` (`ENUM`), `total_price`, `delivery_address` | `user_id` → `user.id` (`RESTRICT`) |
+| `order_dish` | `id` | `quantity`, `price` (chốt tại thời điểm đặt), unique `review_id` | `order_id` → `orders.id` (`CASCADE`), `dish_id` → `dish.id` (`RESTRICT`), `review_id` → `review.id` (`SET NULL`, 1–1) |
+| `review` | `id` | `rating` (1–5), `comment` | — |
+
+### Quyết định thiết kế đáng chú ý
+
+- **`RESTRICT`** ở `user.role_id`, `dish.restaurant_id`, `orders.user_id`, `order_dish.dish_id`: chặn xoá bản ghi cha nếu còn đơn hàng/món tham chiếu, tránh mất dấu vết lịch sử và doanh thu.
+- **`CASCADE`** ở `address`, `user_dish`, `dish_tag`, `image`, `order_dish` (theo `orders`): các bảng này không có giá trị tồn tại độc lập với bảng cha nên xoá cha thì xoá theo.
+- **`order_dish.price`** lưu giá tại thời điểm đặt, tách biệt với `dish.price` — đơn hàng cũ không đổi giá khi món tăng/giảm giá sau này.
+- **`orders.version`**: cột optimistic locking (`@Version`), chống mất cập nhật khi admin và khách cùng đổi trạng thái một đơn.
+- **Unique `(user_id, dish_id)`** trên `user_dish` (thêm ở `V8`): đảm bảo mỗi người dùng chỉ có đúng một dòng giỏ hàng cho mỗi món, phục vụ upsert nguyên tử khi cộng dồn số lượng.
+- **`idempotency_keys`**: không có FK tới user, chỉ lưu user_id dạng snapshot — key + fingerprint (SHA-256 của body) dùng để phát hiện request trùng.
+
+---
+
 ## ⚙️ Cấu hình biến môi trường (`.env`)
 
 ### `.env` (thư mục gốc — điều phối Docker Compose)
