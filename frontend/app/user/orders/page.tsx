@@ -21,6 +21,8 @@ import { mockRestaurants, mockDishes } from "@/lib/mock-data"
 import { fetchUserOrders, fetchOrderItems, submitOrderItemReview, cancelOrder, confirmOrderReceived } from "@/services/orders"
 import { fetchUserProfile } from "@/services/users"
 import { useToast } from "@/hooks/use-toast"
+import { trySilentRefresh } from "@/lib/api-client"
+import { AuthRequiredGate } from "@/components/auth-required-gate"
 import {
   Pagination,
   PaginationContent,
@@ -89,8 +91,21 @@ export default function OrdersPage() {
   const totalPages = Math.ceil(orders.length / ordersPerPage)
   const currentOrders = orders.slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
   const { toast } = useToast()
+  const [authStatus, setAuthStatus] = useState<"checking" | "guest" | "authed">("checking")
 
   useEffect(() => {
+    let cancelled = false
+    trySilentRefresh().then((loggedIn) => {
+      if (cancelled) return
+      setAuthStatus(loggedIn ? "authed" : "guest")
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (authStatus !== "authed") return
     let isMounted = true
     const loadData = async () => {
       setLoading(true)
@@ -125,7 +140,7 @@ export default function OrdersPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [authStatus])
 
   useEffect(() => {
     const loadItems = async () => {
@@ -148,6 +163,25 @@ export default function OrdersPage() {
     // Tùy chọn: chọn đơn hàng đầu tiên của trang mới
     const firstOrderOfPage = orders[(page - 1) * ordersPerPage]
     setSelectedOrder(firstOrderOfPage || null)
+  }
+
+  if (authStatus === "checking") {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <Package className="mx-auto h-16 w-16 text-muted-foreground" />
+        <h2 className="mt-4 text-2xl font-bold text-foreground">Đang tải đơn hàng...</h2>
+      </div>
+    )
+  }
+
+  if (authStatus === "guest") {
+    return (
+      <AuthRequiredGate
+        icon={Package}
+        title="Cần đăng nhập để xem đơn hàng"
+        description="Vui lòng đăng nhập hoặc đăng ký để xem lịch sử đơn hàng của bạn."
+      />
+    )
   }
 
   if (loading) {

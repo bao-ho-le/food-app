@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { trySilentRefresh } from "@/lib/api-client"
 import {
   Select,
   SelectContent,
@@ -320,7 +321,21 @@ export default function FoodPage() {
     return (total / reviews.length).toFixed(1)
   }, [selectedDish, reviewsByDish])
 
-  const handleAddToCart = (dish: Dish) => {
+  const handleAddToCart = async (dish: Dish) => {
+    const loggedIn = await trySilentRefresh()
+    if (!loggedIn) {
+      toast({
+        variant: "destructive",
+        title: "Cần tạo tài khoản để tiếp tục",
+        description: (
+          <Badge variant="outline" className="mt-1 border-destructive/40 text-destructive">
+            Vui lòng đăng nhập hoặc đăng ký để thêm món vào giỏ hàng
+          </Badge>
+        ),
+      })
+      return
+    }
+
     addToCart(dish)
     scheduleAddSync(dish.id)
     toast({

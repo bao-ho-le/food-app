@@ -12,7 +12,8 @@ import {
   createOrder,
 } from "@/services/user-cart"
 import { clearIdempotencyKey } from "@/lib/idempotency"
-import { ApiError } from "@/lib/api-client"
+import { ApiError, trySilentRefresh } from "@/lib/api-client"
+import { AuthRequiredGate } from "@/components/auth-required-gate"
 import { Minus, Plus, Trash2, ShoppingBag, PackageCheck, Ban, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -54,6 +55,7 @@ export default function CartPage() {
   const [addressLoading, setAddressLoading] = useState(true)
   const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined)
   const [isPlacingOrder, setPlacingOrder] = useState(false)
+  const [authStatus, setAuthStatus] = useState<"checking" | "guest" | "authed">("checking")
   const pendingQuantityUpdates = useRef<Record<string, {
     timeout: ReturnType<typeof setTimeout>
     userDishId: string
@@ -70,6 +72,18 @@ export default function CartPage() {
   }
 
   useEffect(() => {
+    let cancelled = false
+    trySilentRefresh().then((loggedIn) => {
+      if (cancelled) return
+      setAuthStatus(loggedIn ? "authed" : "guest")
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (authStatus !== "authed") return
     let isMounted = true
     const loadCart = async () => {
       setCartLoading(true)
@@ -89,9 +103,10 @@ export default function CartPage() {
     return () => {
       isMounted = false
     }
-  }, [replaceCartItems])
+  }, [replaceCartItems, authStatus])
 
   useEffect(() => {
+    if (authStatus !== "authed") return
     let isMounted = true
 
     const loadProfile = async () => {
@@ -134,7 +149,7 @@ export default function CartPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [authStatus])
 
   useEffect(() => {
     if (addresses.length === 0) return
@@ -304,6 +319,28 @@ export default function CartPage() {
     } finally {
       setPlacingOrder(false)
     }
+  }
+
+  if (authStatus === "checking") {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="mx-auto max-w-md text-center">
+          <ShoppingBag className="mx-auto h-16 w-16 text-muted-foreground" />
+          <h2 className="mt-4 text-2xl font-bold text-foreground">Đang tải giỏ hàng...</h2>
+          <p className="mt-2 text-muted-foreground">Vui lòng chờ trong giây lát.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (authStatus === "guest") {
+    return (
+      <AuthRequiredGate
+        icon={ShoppingBag}
+        title="Cần đăng nhập để xem giỏ hàng"
+        description="Vui lòng đăng nhập hoặc đăng ký để xem và quản lý giỏ hàng của bạn."
+      />
+    )
   }
 
   if (isCartLoading) {
