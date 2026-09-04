@@ -325,15 +325,12 @@ export default function FoodPage() {
     const loggedIn = await trySilentRefresh()
     if (!loggedIn) {
       toast({
-        title: "Cần tạo tài khoản để tiếp tục",
-        description: (
-          <Badge
-            variant="outline"
-            className="mt-1 max-w-full gap-1 whitespace-normal border-destructive bg-background py-0 leading-none text-destructive"
-          >
-            <AlertCircle className="shrink-0 text-destructive" />
-            Vui lòng đăng nhập hoặc đăng ký để thêm món vào giỏ hàng
-          </Badge>
+        className: "border-destructive",
+        title: (
+          <div className="flex items-center gap-2 text-foreground">
+            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+            <span>Vui lòng đăng nhập hoặc đăng ký để thêm món vào giỏ hàng</span>
+          </div>
         ),
       })
       return
@@ -342,14 +339,12 @@ export default function FoodPage() {
     addToCart(dish)
     scheduleAddSync(dish.id)
     toast({
+      className: "border-green-500",
       title: (
-        <Badge
-          variant="outline"
-          className="max-w-full gap-1 whitespace-normal border-green-500 bg-background py-0 leading-none text-foreground"
-        >
-          <CheckCircle2 className="shrink-0 text-green-500" />
-          "{dish.name}" đã được thêm vào giỏ hàng!
-        </Badge>
+        <div className="flex items-center gap-2 text-foreground">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+          <span>"{dish.name}" đã được thêm vào giỏ hàng!</span>
+        </div>
       ),
     })
   }
