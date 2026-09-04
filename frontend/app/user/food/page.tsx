@@ -20,7 +20,7 @@ import { fetchAllTags } from "@/services/tags"
 import { fetchDishesRaw, type DishApiResponse } from "@/services/dishes"
 import { fetchDishReviews, type DishReviewResponse } from "@/services/reviews"
 import { addUserCartItem } from "@/services/user-cart"
-import { Search, Star, Plus, Flame, MessageCircle, MapPin, Phone, CheckCircle2 } from "lucide-react"
+import { Search, Star, Plus, Flame, MessageCircle, MapPin, Phone, CheckCircle2, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Pagination,
@@ -325,10 +325,13 @@ export default function FoodPage() {
     const loggedIn = await trySilentRefresh()
     if (!loggedIn) {
       toast({
-        variant: "destructive",
         title: "Cần tạo tài khoản để tiếp tục",
         description: (
-          <Badge variant="outline" className="mt-1 border-destructive/40 text-destructive">
+          <Badge
+            variant="outline"
+            className="mt-1 max-w-full gap-1 whitespace-normal border-destructive bg-background py-0 leading-none text-destructive"
+          >
+            <AlertCircle className="shrink-0 text-destructive" />
             Vui lòng đăng nhập hoặc đăng ký để thêm món vào giỏ hàng
           </Badge>
         ),
@@ -340,12 +343,13 @@ export default function FoodPage() {
     scheduleAddSync(dish.id)
     toast({
       title: (
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="h-5 w-5 text-green-500" />
-          <span className="font-medium">
-            "{dish.name}" đã được thêm vào giỏ hàng!
-          </span>
-        </div>
+        <Badge
+          variant="outline"
+          className="max-w-full gap-1 whitespace-normal border-green-500 bg-background py-0 leading-none text-foreground"
+        >
+          <CheckCircle2 className="shrink-0 text-green-500" />
+          "{dish.name}" đã được thêm vào giỏ hàng!
+        </Badge>
       ),
     })
   }
