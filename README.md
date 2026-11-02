@@ -4,7 +4,7 @@ Dự án Backend + Frontend cho hệ thống đặt món ăn Foodie, xây dựng
 
 Trọng tâm hiện tại của dự án không nằm ở việc thêm tính năng mới, mà ở **độ đúng đắn của hệ thống khi có nhiều người dùng thao tác đồng thời** — bài toán mà một ứng dụng đặt món thực tế luôn phải đối mặt.
 
-🔗 **Demo trực tuyến:** [https://food-app-roan-nine.vercel.app](https://food-app-roan-nine.vercel.app)
+🔗 **Demo trực tuyến:** ~~[https://food-app-roan-nine.vercel.app](https://food-app-roan-nine.vercel.app)~~ — *link hiện không còn hoạt động vì dịch vụ deploy đã hết hạn mức sử dụng. Xem [ảnh chụp giao diện](#-giao-diện-ứng-dụng) bên dưới hoặc [chạy dự án ở máy local](#-hướng-dẫn-chạy-dự-án).*
 
 ---
 
@@ -111,6 +111,47 @@ Một hệ thống đặt món ăn khi chạy thật sẽ gặp những tình hu
 
 ---
 
+## 📸 Giao diện ứng dụng
+
+Ảnh chụp từ bản chạy local (độ phân giải 1440×900) với dữ liệu mẫu được tạo qua API: 4 quán ăn, 9 món, 6 khách hàng cùng các đơn hàng ở đủ trạng thái và đánh giá thực tế.
+
+### 🌐 Trang công khai & Xác thực
+
+| | |
+| :---: | :---: |
+| ![Trang chủ](docs/screenshots/01-trang-chu.png)<br>**Trang chủ** — Trang giới thiệu công khai, dẫn khách tới danh sách món hoặc đăng nhập/đăng ký. | ![Đăng nhập](docs/screenshots/02-dang-nhap.png)<br>**Đăng nhập** — Đăng nhập bằng email và mật khẩu, tự chuyển tới trang khách hàng hoặc trang quản trị theo vai trò. |
+| ![Đăng ký](docs/screenshots/03-dang-ky.png)<br>**Đăng ký** — Tạo tài khoản mới với họ tên, email, số điện thoại và mật khẩu. | ![Yêu cầu đăng nhập](docs/screenshots/04-yeu-cau-dang-nhap-gio-hang.png)<br>**Yêu cầu đăng nhập** — Khách chưa đăng nhập vẫn vào được giỏ hàng/đơn hàng nhưng thấy lời mời đăng nhập thay vì dữ liệu. |
+
+### 🍜 Khám phá món ăn
+
+| | |
+| :---: | :---: |
+| ![Danh sách món ăn](docs/screenshots/05-danh-sach-mon-an.png)<br>**Danh sách món ăn** — Lưới món kèm giá, tồn kho và tag; cột phải hiển thị thông tin quán và đánh giá của món đang chọn. | ![Tìm kiếm món ăn](docs/screenshots/06-tim-kiem-mon-an.png)<br>**Tìm kiếm** — Tìm món theo tên ngay trên thanh điều hướng, kết quả lọc tức thì. |
+| ![Bộ lọc món ăn](docs/screenshots/07-bo-loc-mon-an.png)<br>**Bộ lọc** — Lọc theo khoảng giá, số sao, tag và sắp xếp theo giá. | |
+
+### 🛒 Giỏ hàng & Đơn hàng
+
+| | |
+| :---: | :---: |
+| ![Giỏ hàng](docs/screenshots/08-gio-hang.png)<br>**Giỏ hàng** — Tăng/giảm số lượng, xoá món và xem tổng tiền; giỏ được đồng bộ với backend. | ![Xác nhận đơn hàng](docs/screenshots/09-xac-nhan-don-hang.png)<br>**Xác nhận đặt hàng** — Kiểm tra thông tin giao hàng, chọn địa chỉ rồi đặt đơn; request gửi kèm `Idempotency-Key` để chống tạo đơn trùng. |
+| ![Lịch sử đơn hàng](docs/screenshots/10-lich-su-don-hang.png)<br>**Đơn hàng của tôi** — Danh sách đơn theo trạng thái (chờ xác nhận, đang chuẩn bị, đang giao, hoàn thành, đã huỷ) cùng chi tiết từng đơn. | ![Đánh giá món ăn](docs/screenshots/11-danh-gia-mon-an.png)<br>**Đánh giá món** — Chấm sao và viết nhận xét cho từng món trong đơn đã giao. |
+
+### 👤 Tài khoản
+
+| | |
+| :---: | :---: |
+| ![Hồ sơ cá nhân](docs/screenshots/12-ho-so-ca-nhan.png)<br>**Hồ sơ cá nhân** — Cập nhật họ tên, số điện thoại, ngày sinh, giới tính và đổi mật khẩu. | ![Sổ địa chỉ](docs/screenshots/13-dia-chi-giao-hang.png)<br>**Sổ địa chỉ** — Quản lý nhiều địa chỉ giao hàng và chọn một địa chỉ mặc định. |
+
+### 🛠️ Trang quản trị (Admin)
+
+| | |
+| :---: | :---: |
+| ![Tổng quan quản trị](docs/screenshots/14-quan-tri-tong-quan.png)<br>**Tổng quan** — Thống kê tài khoản, quán, đơn hàng, doanh thu kèm biểu đồ, đơn gần đây và món bán chạy. | ![Quản lý món ăn](docs/screenshots/15-quan-tri-mon-an.png)<br>**Quản lý món ăn** — Thêm/sửa món, nhập kho, tạm ngưng bán; theo dõi tồn kho và điểm đánh giá. |
+| ![Quản lý đơn hàng](docs/screenshots/16-quan-tri-don-hang.png)<br>**Quản lý đơn hàng** — Tìm kiếm, lọc và chuyển trạng thái đơn theo đúng luồng (xác nhận → giao hàng, hoặc huỷ). | ![Quản lý quán ăn](docs/screenshots/17-quan-tri-nha-hang.png)<br>**Quản lý quán ăn** — Thêm, chỉnh sửa và tạm ngưng hoạt động của quán. |
+| ![Quản lý người dùng](docs/screenshots/18-quan-tri-nguoi-dung.png)<br>**Quản lý người dùng** — Thống kê theo vai trò/trạng thái, khoá hoặc mở khoá tài khoản và phân quyền. | |
+
+---
+
 ## 🛠️ Công nghệ sử dụng (Tech Stack)
 
 ### Backend
@@ -179,6 +220,8 @@ docker compose down
 Hệ thống chạy trên 2 nền tảng: Railway cho Spring Boot và MySQL, Vercel cho Next.js.
 
 ### URL public
+
+> ⚠️ **Các URL dưới đây hiện không còn truy cập được** vì dịch vụ deploy đã hết hạn mức sử dụng. Bảng được giữ lại để ghi nhận kiến trúc triển khai đã dùng.
 
 | Dịch vụ | URL | Mô tả |
 | :--- | :--- | :--- |
